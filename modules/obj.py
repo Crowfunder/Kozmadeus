@@ -6,5 +6,5 @@
 # animations: NO
 ###################
 
-def extractOBJ():
+def extract():
     pass

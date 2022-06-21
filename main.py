@@ -3,11 +3,17 @@ import gc
 import os.path
 from os import mkdir as mkdir
 from wget import download as download_file
-from modules import *
+import modules
 
 separator = ('---------------------------------'
              '------------------------------')
 
+def cli_menu():
+  # to be added
+  pass
+
+# There must be a better way to resolve this 
+# than 3 separate download url's
 def templates_download():
 
   dl_urls = [
@@ -18,6 +24,7 @@ def templates_download():
 
   if not os.path.isdir("templates") == True:
     mkdir("templates")
+
   for url in dl_urls:
     download_file(url, out = "templates/") 
 
@@ -40,6 +47,28 @@ def export_xml(file_name, template, args):
     print(f'Finished writing to {o.name}.')
 
 
+# Output the appropriate model data extract function
+def process_modules(file_name):
+
+  file_extension = file_name.split(".")[-1]
+
+  # "__modules__" is a dict of all modules' names and objects
+  # Refer to "modules/__init__.py" for relevant code. 
+  if file_extension in modules.__modules__.keys():
+
+    extract_module = modules.__modules__[file_extension]
+    return extract_module.extract
+
+  else:
+
+    raise Exception("Error: Unrecognized file type!")
+
+
+
+def main(file, file_name, template):
+
+  extract = process_modules(file_name)
+
 
 if __name__ == '__main__':
 
@@ -48,6 +77,7 @@ if __name__ == '__main__':
       try:
         print('Downloading template files...')
         templates_download()
+        cli_menu()
 
       except:
         print("Template files are missing, make " 

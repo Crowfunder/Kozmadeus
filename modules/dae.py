@@ -6,6 +6,5 @@
 # animations: YES
 ###################
 
-
-def extractDAE():
+def extract():
     pass
