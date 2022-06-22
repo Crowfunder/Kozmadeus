@@ -2,6 +2,6 @@ dist/
 build/
 __pycache__/
 build.bat
-Bootshuze-GUI.spec
+Kozmadeus.spec
 venv/
 .vscode/
