@@ -5,6 +5,7 @@ from os import mkdir as mkdir
 from wget import download as download_file
 import modules
 
+version_number = "v0.0.1dev"
 separator = ('---------------------------------'
              '------------------------------')
 
