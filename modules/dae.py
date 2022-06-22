@@ -1,10 +1,10 @@
-###################
-# SUPPORTS:
-# 
-# mesh:       YES
-# armature:   YES
-# animations: YES
-###################
+#####################
+# SUPPORTS:         #
+#                   #
+# mesh:       YES   #
+# armature:   YES   #
+# animations: YES   #
+#####################
 
-def extract():
+def extract(file_name):
     pass

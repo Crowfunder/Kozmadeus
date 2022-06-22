@@ -69,6 +69,12 @@ def process_modules(file_name):
 def main(file, file_name, template):
 
   extract = process_modules(file_name)
+  args = extract(file_name)
+
+  # If the model has bones, swap the template
+  # Needs a handle for animations (?)
+  if args["bones"] != "":
+    template = template + "_bones"
 
 
 if __name__ == '__main__':
