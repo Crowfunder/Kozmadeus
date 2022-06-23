@@ -52,34 +52,53 @@
           <geometry class="com.threerings.opengl.geometry.config.GeometryConfig$IndexedStored">
             <bounds>
                <minExtent>{{ min_extent }}</minExtent>
-               <maxExtent>{{ max_extent }}</maxExtent>
+               <maxExtent>{{ max_extent }}</maxExtent>>
             </bounds>
               <mode>{{ mode }}</mode>
+              <vertexAttribArrays>
+                <entry>
+                  <size>4</size>
+                  <type>FLOAT</type>
+                  <stride>64</stride>
+                  <floatArray id="1">{{ vertices }}</floatArray>
+                  <name>boneIndices</name>
+                </entry>
+                <entry>
+                  <size>4</size>
+                  <type>FLOAT</type>
+                  <stride>64</stride>
+                  <offset>16</offset>
+                  <floatArray ref="1"/>
+                  <name>boneWeights</name>
+                </entry>
+              </vertexAttribArrays>
               <texCoordArrays>
                 <entry>
                   <size>2</size>
                   <type>FLOAT</type>
-                  <stride>32</stride>
-                  <floatArray id="1">{{ vertices }}</floatArray>
+                  <stride>64</stride>
+                  <offset>32</offset>
+                  <floatArray ref="1"/>
                 </entry>
               </texCoordArrays>
               <normalArray>
                 <size>3</size>
                 <type>FLOAT</type>
-                <stride>32</stride>
-                <offset>8</offset>
+                <stride>64</stride>
+                <offset>40</offset>
                 <floatArray ref="1"/>
               </normalArray>
               <vertexArray>
                 <size>3</size>
                 <type>FLOAT</type>
-                <stride>32</stride>
-                <offset>20</offset>
+                <stride>64</stride>
+                <offset>52</offset>
                 <floatArray ref="1"/>
-              </vertexArray>
+              </vertexArray>  
               <end>{{ indices_end }}</end>
             <indices>{{ indices }}</indices>
-		  </geometry>
+            <bones>{{ bones }}</bones>
+		      </geometry>
         </entry>
       </visible>
     </meshes>
