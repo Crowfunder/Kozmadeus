@@ -1,9 +1,12 @@
 import re
 import gc
-import os.path
-from os import mkdir as mkdir
-from wget import download as download_file
+import zipfile
 import modules
+import os.path
+from zipfile import ZipFile
+from os import remove as delete_file
+from wget import download as download_file
+
 
 version_number = "v0.0.1dev"
 separator = ('---------------------------------'
@@ -13,21 +16,18 @@ def cli_menu():
   # to be added
   pass
 
-# There must be a better way to resolve this 
-# than 3 separate download url's
+
 def templates_download():
 
-  dl_urls = [
-    "https://raw.githubusercontent.com/Crowfunder/Kozmadeus/master/templates/template_articulated",
-    "https://raw.githubusercontent.com/Crowfunder/Kozmadeus/master/templates/template_static",
-    "https://raw.githubusercontent.com/Crowfunder/Kozmadeus/master/templates/template_animation"
-  ]
+  # Let's make the filename dynamic in case the name ever gets changed
+  dl_url = "https://github.com/Crowfunder/Kozmadeus/raw/main/assets/templates.zip"
+  dl_filename = dl_url.split('/')[-1]
+  download_file(url)
 
-  if not os.path.isdir("templates") == True:
-    mkdir("templates")
+  with ZipFile("templates.zip", 'r') as zip_file:
+    zip_file.extractall()
 
-  for url in dl_urls:
-    download_file(url, out = "templates/") 
+  delete_file(dl_filename)
 
 
 
@@ -51,7 +51,7 @@ def export_xml(file_name, template, args):
 # Output the appropriate model data extract function
 def process_modules(file_name):
 
-  file_extension = file_name.split(".")[-1]
+  file_extension = file_name.split('.')[-1]
 
   # "__modules__" is a dict of all modules' names and objects
   # Refer to "modules/__init__.py" for relevant code. 
@@ -66,7 +66,7 @@ def process_modules(file_name):
 
 
 
-def main(file, file_name, template):
+def main(file, file_name, template, export_to_file):
 
   extract = process_modules(file_name)
   args = extract(file_name)
@@ -75,6 +75,12 @@ def main(file, file_name, template):
   # Needs a handle for animations (?)
   if args["bones"] != "":
     template = template + "_bones"
+
+  if export_to_file:
+    export_xml(file_name, template, args)
+  
+  else:
+    return args
 
 
 if __name__ == '__main__':
