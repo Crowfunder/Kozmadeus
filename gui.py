@@ -1,19 +1,16 @@
 import PySimpleGUI as sg
 from main import *
 
-""" def console_print(text, window):
-  print(text)
-  window.Refresh() """
 
 def menu():
 
   # Retrieve a list of file types based on the modules.
-  # "__modules__" is a dict of all modules' names and objects
-  # Refer to "modules/__init__.py" for relevant code. 
+  # '__modules__' is a dict of all modules' names and objects
+  # Refer to 'modules/__init__.py' for relevant code. 
   file_types_list = [] 
   for extension in modules.__modules__.keys():
-    extension = "*." + extension
-    file_type_part = ("Model", extension)
+    extension = '*.' + extension
+    file_type_part = ('Model', extension)
     file_types_list.append(file_type_part)
 
 
@@ -58,9 +55,9 @@ def menu():
         window['_done_'].Update('')
               
         if window['_articulated-mode_'].Get() == True:
-          template = "template_articulated"
+          template = 'template_articulated'
         elif window['_static-mode_'].Get() == True:
-          template = "template_static"
+          template = 'template_static'
 
         file_name = os.path.basename(file).replace('.obj', '')
         if os.path.isfile(f'{file_name}.xml'):
@@ -85,22 +82,4 @@ def menu():
 
 
 if __name__ == '__main__':
-
-  # Manual checking all template files seems redundant
-  # Gotta find a better way to handle it
-  if not os.path.isfile('templates/template_articulated'):
-    if not os.path.isfile('templates/template_static'):
-      try:
-
-        sg.Popup('Downloading template files...', button_type=5,
-                  auto_close=True, no_titlebar=True)
-        templates_download()
-
-      except:
-
-        sg.PopupError("Template files are missing, make " 
-                      "sure they are in the same directory "
-                      "as this script and start again.")  
-        quit()
-
   menu()

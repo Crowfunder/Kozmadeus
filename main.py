@@ -4,11 +4,10 @@ import zipfile
 import modules
 import os.path
 from zipfile import ZipFile
-from os import remove as delete_file
 from wget import download as download_file
 
 
-version_number = "v0.0.1dev"
+version_number = 'v0.0.1dev'
 separator = ('---------------------------------'
              '------------------------------')
 
@@ -16,36 +15,44 @@ def cli_menu():
   # to be added
   pass
 
-
 def templates_download():
 
   # Let's make the filename dynamic in case the name ever gets changed
-  dl_url = "https://github.com/Crowfunder/Kozmadeus/raw/main/assets/templates.zip"
+  dl_url = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/templates.zip'
   dl_filename = dl_url.split('/')[-1]
-  download_file(url)
+  
+  if not os.path.isfile(dl_filename)
+    print('Downloading template files...')
+    download_file(dl_url)
 
-  with ZipFile("templates.zip", 'r') as zip_file:
+  print('Unpacking...')
+  with ZipFile('templates.zip', 'r') as zip_file:
     zip_file.extractall()
-
-  delete_file(dl_filename)
 
 
 
 def export_xml(file_name, template, args):
 
-  with open(f"{file_name}.xml", 'w+') as o, \
-       open(f"templates/{template}", 'r') as i:
+  try:
 
-    print(f'Writing output with {template}...')    
-    regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
+    with open(f'{file_name}.xml', 'w+') as o, \
+         open(f'templates/{template}', 'r') as i:
 
-    for line in i:
+      print(f'Writing output with {template}...')    
+      regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
 
-      if any(f'{{ {arg} }}' in line for arg in args.keys()):
-        line = regex.sub(args[regex.search(line).group(1)], line)
+      for line in i:
 
-      o.write(line)
+        if any(f'{{ {arg} }}' in line for arg in args.keys()):
+          line = regex.sub(args[regex.search(line).group(1)], line)
+
+        o.write(line)
     print(f'Finished writing to {o.name}.')
+
+  except FileNotFoundError:
+    print(f'ERROR: Template files not found!\n'
+           'Unable to run. Please restore the '
+           'files from settings!')
 
 
 # Output the appropriate model data extract function
@@ -62,39 +69,45 @@ def process_modules(file_name):
 
   else:
 
-    raise Exception("Error: Unrecognized file type!")
+    raise Exception('Error: Unrecognized file type!')
 
 
 
 def main(file, file_name, template, export_to_file):
 
-  extract = process_modules(file_name)
-  args = extract(file_name)
+  if modules.__modules__ == {}:
+    raise Exception('Error: No modules found!\n'
+                    'Please reinstall the modules or '
+                    'restore files from settings.')
 
-  # If the model has bones, swap the template
-  # Needs a handle for animations (?)
-  if args["bones"] != "":
-    template = template + "_bones"
+  try:
 
-  if export_to_file:
-    export_xml(file_name, template, args)
+    extract = process_modules(file_name)
+    args = extract(file_name)
+
+    # If the model has bones, swap the template
+    # Needs a handle for animations (?)
+    if args['bones'] != '':
+      template = template + '_bones'
+
+    else:
+      del args['bones']
+
+    if export_to_file:
+      export_xml(file_name, template, args)
   
-  else:
-    return args
+    else:
+      return args
+
+  except AttributeError:
+
+    print('ERROR: Module not found or corrupted!\n'
+          'Please reinstall the module or '
+          'restore files from settings.')
+
+  print(separator)
 
 
 if __name__ == '__main__':
 
-  if not os.path.isfile('templates/template_articulated'):
-    if not os.path.isfile('templates/template_static'):
-      try:
-        print('Downloading template files...')
-        templates_download()
-        cli_menu()
-
-      except:
-        print("Template files are missing, make " 
-              "sure they are in the same directory "
-              "as this script and start again.")  
-        quit()
-
+  cli_menu()
