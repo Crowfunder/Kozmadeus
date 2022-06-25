@@ -20,7 +20,7 @@ def menu():
                         justification='c', font=('Helvetica', 15))],
               [sg.Text('Select a model to process:')], 
               [sg.InputText(size=(29,1)), 
-                sg.FileBrowse(file_types=file_types_list)],
+                sg.FilesBrowse(file_types=file_types_list)],
               [sg.Radio('Articulated','OUTPUT_TYPE', default=True,
                         tooltip='Output model as Articulated type',
                         key='_articulated-mode_'),
@@ -51,7 +51,7 @@ def menu():
         break
 
       elif event == 'Submit':
-        file = values[0]
+        file_names = values[0]
         window['_done_'].Update('')
               
         if window['_articulated-mode_'].Get() == True:
@@ -59,19 +59,12 @@ def menu():
         elif window['_static-mode_'].Get() == True:
           template = 'template_static'
 
-        file_name = os.path.basename(file).replace('.obj', '')
-        if os.path.isfile(f'{file_name}.xml'):
-          print(f'File {file_name}.xml '
-                         'already exists! Halting!')
-
         else:
 
-          if file != '':
-            print(fr'''Processing "{file}"...''')
-            main(file, file_name, template)
+          if file_names != '':
+            main(file_names, template, export_filename)
           else:
             raise Exception('Please select a file!')
-          print(separator)
 
       elif event == 'Clear Console':
               window['_output_'].Update('')

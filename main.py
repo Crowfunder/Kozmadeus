@@ -3,6 +3,7 @@ import gc
 import zipfile
 import modules
 import os.path
+from os import makedirs
 from zipfile import ZipFile
 from wget import download as download_file
 
@@ -31,13 +32,28 @@ def templates_download():
 
 
 
-def export_xml(file_name, template, args):
+def export_xml(export_filename, template, args):
 
   try:
 
-    with open(f'{file_name}.xml', 'w+') as o, \
+    # Assure the file extension gets included
+    if export_filename.split('.')[-1] != 'xml':
+      export_filename += '.xml'
+
+    # In case a file with the same name exists
+    # patch up a new file name.
+    file_number = 1
+    old_name = export_filename
+    while os.path.isfile(export_filename):
+      export_filename = f'({file_number})' + old_name
+      file_number += 1
+
+    # Assure the output dir exists
+    makedirs('output', exist_ok=True)
+    with open(f'output/{export_filename}', 'w+') as o, \
          open(f'templates/{template}', 'r') as i:
 
+      # Write to output file using regex substitution
       print(f'Writing output with {template}...')    
       regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
 
@@ -47,7 +63,7 @@ def export_xml(file_name, template, args):
           line = regex.sub(args[regex.search(line).group(1)], line)
 
         o.write(line)
-    print(f'Finished writing to {o.name}.')
+    print(f'Finished writing to output/{o.name}.')
 
   except FileNotFoundError:
     print(f'ERROR: Template files not found!\n'
@@ -73,7 +89,7 @@ def process_modules(file_name):
 
 
 
-def main(file, file_name, template, export_to_file):
+def main(file_names, template, export_filename):
 
   if modules.__modules__ == {}:
     raise Exception('Error: No modules found!\n'
@@ -82,22 +98,30 @@ def main(file, file_name, template, export_to_file):
 
   try:
 
-    extract = process_modules(file_name)
-    args = extract(file_name)
+    for file_name in file_names:
+    
+      print(fr'''Processing "{file_name}"...''')
+      extract = process_modules(file_name)
+      args = extract(file_name)
 
-    # If the model has bones, swap the template
-    # Needs a handle for animations (?)
-    if args['bones'] != '':
-      template = template + '_bones'
+      # If the model has bones, swap the template
+      # Needs a handle for animations (?)
+      if args['bones'] != '':
+        template += '_bones'
 
-    else:
-      del args['bones']
+      else:
+        del args['bones']
 
-    if export_to_file:
-      export_xml(file_name, template, args)
-  
-    else:
-      return args
+      if export_filename != '':
+        export_xml(export_filename, template, args)
+        
+        del args
+        gc.collect()
+    
+      else:
+
+        # Gotta add a gc.collect() handle when done
+        return args
 
   except AttributeError:
 
