@@ -6,5 +6,5 @@
 # animations: YES   #
 #####################
 
-def extract(file_name):
+def Extract(file_name):
     pass

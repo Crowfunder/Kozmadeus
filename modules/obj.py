@@ -14,7 +14,7 @@
 
 import gc
 
-def extract(file_name):
+def Extract(file_name):
     with open(file_name, 'r') as f:
         args     = dict()
         faces    = list()

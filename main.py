@@ -3,20 +3,20 @@ import gc
 import zipfile
 import modules
 import os.path
-from os import makedirs
 from zipfile import ZipFile
-from wget import download as download_file
+from os import makedirs as MakeDirs
+from wget import download as DownloadFile
 
 
 version_number = 'v0.0.1dev'
 separator = ('---------------------------------'
              '------------------------------')
 
-def cli_menu():
+def CliMenu():
   # to be added
   pass
 
-def templates_download():
+def TemplatesDownload():
 
   # Let's make the filename dynamic in case the name ever gets changed
   dl_url = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/templates.zip'
@@ -24,7 +24,7 @@ def templates_download():
   
   if not os.path.isfile(dl_filename)
     print('Downloading template files...')
-    download_file(dl_url)
+    DownloadFile(dl_url)
 
   print('Unpacking...')
   with ZipFile('templates.zip', 'r') as zip_file:
@@ -32,7 +32,7 @@ def templates_download():
 
 
 
-def export_xml(export_filename, template, args):
+def ExportXML(export_filename, template, args):
 
   try:
 
@@ -49,7 +49,7 @@ def export_xml(export_filename, template, args):
       file_number += 1
 
     # Assure the output dir exists
-    makedirs('output', exist_ok=True)
+    MakeDirs('output', exist_ok=True)
     with open(f'output/{export_filename}', 'w+') as o, \
          open(f'templates/{template}', 'r') as i:
 
@@ -71,8 +71,8 @@ def export_xml(export_filename, template, args):
            'files from settings!')
 
 
-# Output the appropriate model data extract function
-def process_modules(file_name):
+# Output the appropriate model data Extract function
+def ProcessModules(file_name):
 
   file_extension = file_name.split('.')[-1]
 
@@ -81,7 +81,7 @@ def process_modules(file_name):
   if file_extension in modules.__modules__.keys():
 
     extract_module = modules.__modules__[file_extension]
-    return extract_module.extract
+    return extract_module.Extract
 
   else:
 
@@ -89,7 +89,7 @@ def process_modules(file_name):
 
 
 
-def main(file_names, template, export_filename):
+def Main(file_names, template, export_filename):
 
   if modules.__modules__ == {}:
     raise Exception('Error: No modules found!\n'
@@ -101,8 +101,8 @@ def main(file_names, template, export_filename):
     for file_name in file_names:
     
       print(fr'''Processing "{file_name}"...''')
-      extract = process_modules(file_name)
-      args = extract(file_name)
+      Extract = ProcessModules(file_name)
+      args = Extract(file_name)
 
       # If the model has bones, swap the template
       # Needs a handle for animations (?)
@@ -113,7 +113,7 @@ def main(file_names, template, export_filename):
         del args['bones']
 
       if export_filename != '':
-        export_xml(export_filename, template, args)
+        ExportXML(export_filename, template, args)
         
         del args
         gc.collect()
@@ -134,4 +134,4 @@ def main(file_names, template, export_filename):
 
 if __name__ == '__main__':
 
-  cli_menu()
+  CliMenu()

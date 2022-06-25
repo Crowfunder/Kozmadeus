@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 from main import *
 
 
-def menu():
+def Menu():
 
   # Retrieve a list of file types based on the modules.
   # '__modules__' is a dict of all modules' names and objects
@@ -62,7 +62,7 @@ def menu():
         else:
 
           if file_names != '':
-            main(file_names, template, export_filename)
+            Main(file_names, template, export_filename)
           else:
             raise Exception('Please select a file!')
 
@@ -75,4 +75,4 @@ def menu():
 
 
 if __name__ == '__main__':
-  menu()
+  Menu()
