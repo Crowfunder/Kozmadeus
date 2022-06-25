@@ -62,7 +62,7 @@ def Menu():
         else:
 
           if file_names != '':
-            Main(file_names, template, export_filename)
+            Main(file_names, template, True)
           else:
             raise Exception('Please select a file!')
 

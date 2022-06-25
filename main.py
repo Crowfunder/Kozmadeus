@@ -9,6 +9,8 @@ from wget import download as DownloadFile
 
 
 version_number = 'v0.0.1dev'
+restore_flair = ('Unable to run. Please restore the '
+                'files from Options!')
 separator = ('---------------------------------'
              '------------------------------')
 
@@ -32,25 +34,24 @@ def TemplatesDownload():
 
 
 
-def ExportXML(export_filename, template, args):
+def ExportXML(file_name, template, args):
 
   try:
 
-    # Assure the file extension gets included
-    if export_filename.split('.')[-1] != 'xml':
-      export_filename += '.xml'
+    # Trim out the extension and add an appropriate one
+    export_file = file_name.rsplit('.', 1)[0] + '.xml'
 
     # In case a file with the same name exists
     # patch up a new file name.
     file_number = 1
-    old_name = export_filename
-    while os.path.isfile(export_filename):
-      export_filename = f'({file_number})' + old_name
+    old_name = export_file
+    while os.path.isfile(export_file):
+      export_file = f'({file_number})' + old_name
       file_number += 1
 
     # Assure the output dir exists
     MakeDirs('output', exist_ok=True)
-    with open(f'output/{export_filename}', 'w+') as o, \
+    with open(f'output/{export_file}', 'w+') as o, \
          open(f'templates/{template}', 'r') as i:
 
       # Write to output file using regex substitution
@@ -66,9 +67,7 @@ def ExportXML(export_filename, template, args):
     print(f'Finished writing to output/{o.name}.')
 
   except FileNotFoundError:
-    print(f'ERROR: Template files not found!\n'
-           'Unable to run. Please restore the '
-           'files from settings!')
+    print(f'ERROR: Template files not found!\n{restore_flair}')
 
 
 # Output the appropriate model data Extract function
@@ -89,12 +88,10 @@ def ProcessModules(file_name):
 
 
 
-def Main(file_names, template, export_filename):
+def Main(file_names, template, export_to_files):
 
   if modules.__modules__ == {}:
-    raise Exception('Error: No modules found!\n'
-                    'Please reinstall the modules or '
-                    'restore files from settings.')
+    raise Exception(f'Error: No modules found!\n{restore_flair}')
 
   try:
 
@@ -112,8 +109,8 @@ def Main(file_names, template, export_filename):
       else:
         del args['bones']
 
-      if export_filename != '':
-        ExportXML(export_filename, template, args)
+      if export_to_files:
+        ExportXML(file_name, template, args)
         
         del args
         gc.collect()
@@ -125,9 +122,7 @@ def Main(file_names, template, export_filename):
 
   except AttributeError:
 
-    print('ERROR: Module not found or corrupted!\n'
-          'Please reinstall the module or '
-          'restore files from settings.')
+    print(f'ERROR: Module not found or corrupted!\n{restore_flair}')
 
   print(separator)
 
