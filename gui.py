@@ -40,7 +40,7 @@ def Menu():
             [sg.Frame(layout = column2, title='Console')]]
 
   window = sg.Window(f'Kozmadeus {version_number}', layout, 
-                      element_justification='c').Finalize()
+                      element_justification='c', resizable=True).Finalize()
       
 
   while True:

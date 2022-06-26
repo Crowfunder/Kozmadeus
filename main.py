@@ -4,33 +4,65 @@ import zipfile
 import modules
 import os.path
 from zipfile import ZipFile
+from os import remove as DeleteFile
 from os import makedirs as MakeDirs
 from wget import download as DownloadFile
 
-
+# Defining few necessary consts
 version_number = 'v0.0.1dev'
 restore_flair = ('Unable to run. Please restore the '
                 'files from Options!')
 separator = ('---------------------------------'
              '------------------------------')
 
-def CliMenu():
-  # to be added
-  pass
-
-def TemplatesDownload():
-
-  # Let's make the filename dynamic in case the name ever gets changed
-  dl_url = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/templates.zip'
-  dl_filename = dl_url.split('/')[-1]
+# Function that checks github for updates
+# Returns True, if there's an update
+# False, if there's none
+def CheckUpdates():
   
-  if not os.path.isfile(dl_filename)
-    print('Downloading template files...')
-    DownloadFile(dl_url)
+  version_url = 'https://raw.githubusercontent.com/Crowfunder/Kozmadeus/main/VERSION'
+  version_filename = 'VERSION'
+  
+  if os.path.isfile(version_filename):
+    DeleteFile(version_filename)
+    
+  try:
+      
+    DownloadFile(restore_url)
+    with open(version_filename, 'r') as version_file:
+    
+      if version_number == version_file.read():
+        return False
 
-  print('Unpacking...')
-  with ZipFile('templates.zip', 'r') as zip_file:
-    zip_file.extractall()
+      else:
+        return True
+
+  except:
+    print('Warning: Unable to fetch updates!\n'
+          'Check your internet connection.')
+
+
+# Function for files restoration
+# Restores both modules and templates
+# Download from github and unzip
+def RestoreFiles():
+
+  restore_url = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/restore.zip'
+  restore_filename = 'restore.zip'
+  
+  if not os.path.isfile(restore_filename):
+    
+    try:
+      print('Downloading files...')
+      DownloadFile(restore_url)
+      
+      print('Unpacking...')
+      with ZipFile(restore_filename, 'r') as zip_file:
+        zip_file.extractall()
+
+    except:
+      print('Error: Unable to download!\n'
+            'Check your internet connection.')
 
 
 
@@ -67,7 +99,7 @@ def ExportXML(file_name, template, args):
     print(f'Finished writing to output/{o.name}.')
 
   except FileNotFoundError:
-    print(f'ERROR: Template files not found!\n{restore_flair}')
+    print(f'Error: Template files not found!\n{restore_flair}')
 
 
 # Output the appropriate model data Extract function
