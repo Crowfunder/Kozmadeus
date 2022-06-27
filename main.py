@@ -1,6 +1,5 @@
 import re
 import gc
-from tkinter import SEPARATOR
 import modules
 import os.path
 import argparse
@@ -17,8 +16,7 @@ separator = ('---------------------------------'
              '------------------------------')
 
 # Function that checks github for updates
-# Returns True, if there's an update
-# False, if there's none
+# Returns version fetched from github as string
 def CheckUpdates():
   
   version_url = 'https://raw.githubusercontent.com/Crowfunder/Kozmadeus/main/VERSION'
@@ -100,7 +98,7 @@ def ProcessModules(file_name):
   file_extension = file_name.split('.')[-1]
 
   # "__modules__" is a dict of all modules' names and objects
-  # Refer to "modules/__init__.py" for relevant code. 
+  # Refer to "modules/__init__.py" for relevant code
   if file_extension in modules.__modules__.keys():
 
     extract_module = modules.__modules__[file_extension]
