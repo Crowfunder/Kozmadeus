@@ -39,7 +39,7 @@ def Menu():
   layout = [[sg.Frame(layout = column1, title='')], 
             [sg.Frame(layout = column2, title='Console')]]
 
-  window = sg.Window(f'Kozmadeus {version_number}', layout, 
+  window = sg.Window(f'Kozmadeus {version_current}', layout, 
                       element_justification='c', resizable=True).Finalize()
       
 
@@ -62,7 +62,7 @@ def Menu():
         else:
 
           if file_names != '':
-            Main(file_names, template, True)
+            Main(file_names, template, False)
           else:
             raise Exception('Please select a file!')
 

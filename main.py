@@ -1,15 +1,16 @@
 import re
 import gc
-import zipfile
+from tkinter import SEPARATOR
 import modules
 import os.path
+import argparse
 from zipfile import ZipFile
 from os import remove as DeleteFile
 from os import makedirs as MakeDirs
 from wget import download as DownloadFile
 
 # Defining few necessary consts
-version_number = 'v0.0.1dev'
+version_current = 'v0.0.1dev'
 restore_flair = ('Unable to run. Please restore the '
                 'files from Options!')
 separator = ('---------------------------------'
@@ -25,21 +26,11 @@ def CheckUpdates():
   
   if os.path.isfile(version_filename):
     DeleteFile(version_filename)
-    
-  try:
       
-    DownloadFile(restore_url)
-    with open(version_filename, 'r') as version_file:
-    
-      if version_number == version_file.read():
-        return False
-
-      else:
-        return True
-
-  except:
-    print('Warning: Unable to fetch updates!\n'
-          'Check your internet connection.')
+  DownloadFile(version_url)
+  
+  with open(version_filename, 'r') as version_file:
+    return version_file.read()
 
 
 # Function for files restoration
@@ -59,6 +50,7 @@ def RestoreFiles():
       print('Unpacking...')
       with ZipFile(restore_filename, 'r') as zip_file:
         zip_file.extractall()
+        print('Success! Files restored.')
 
     except:
       print('Error: Unable to download!\n'
@@ -120,7 +112,7 @@ def ProcessModules(file_name):
 
 
 
-def Main(file_names, template, export_to_files):
+def Main(file_names, template, no_export_file):
 
   if modules.__modules__ == {}:
     raise Exception(f'Error: No modules found!\n{restore_flair}')
@@ -141,7 +133,7 @@ def Main(file_names, template, export_to_files):
       else:
         del args['bones']
 
-      if export_to_files:
+      if not no_export_file:
         ExportXML(file_name, template, args)
         
         del args
@@ -149,7 +141,6 @@ def Main(file_names, template, export_to_files):
     
       else:
 
-        # Gotta add a gc.collect() handle when done
         return args
 
   except AttributeError:
@@ -158,6 +149,60 @@ def Main(file_names, template, export_to_files):
 
   print(separator)
 
+# Command Line Interface, invoked if main is invoked 
+# instead of gui.
+def CliMenu():
+
+  # Defining argparse args
+  # A similar mess to that of GUI defining
+  # can't be helped I guess
+  parser = argparse.ArgumentParser(description=('Converts models to '
+                                                'Spiral Knights XML.'),
+                                   formatter_class=argparse.RawTextHelpFormatter,
+                                   epilog=('Script written with love by Crowfunder\n'
+                                           'Credits: Puzovoz, XanTheDragon, '
+                                           'Kirbeh \nGithub: '
+                                           'https://github.com/Crowfunder/Kozmadeus'))
+  
+  parser.add_argument('files_list', nargs='+',
+                      help='<Required> Input the files to process')
+  parser.add_argument('-t', '--type', choices=['articulated', 'static'],
+                      default='articulated', help='Output model type choice')
+  parser.add_argument('--no-file', action='store_true',
+                      help='Output raw data, no write to xml files')
+  parser.add_argument('--restore-files', action='store_true',
+                      help='Restore modules and templates on start')
+  parser.add_argument('--skip-update', action='store_true', 
+                      help='Skips update check on start')
+  
+  parser_args = parser.parse_args()
+  
+  # Make use of argparse args
+  if parser_args.restore_files:
+    RestoreFiles()
+    
+  # Check for updates
+  if not parser_args.skip_update:
+    try:
+      print(separator)
+      version_github = CheckUpdates()
+      
+      print('Current version: ', version_current)
+      print('Github version : ', version_github)
+      
+      if version_github != version_current:
+        print('Updates available! \nDownload at: '
+              'https://github.com/Crowfunder/Kozmadeus/releases\n')
+        print(separator)
+    
+    except:
+      print('Warning: Unable to fetch updates!\n'
+            'Check your internet connection.')
+    
+  template = 'template_' + parser_args.type
+  
+  Main(parser_args.file_names, template, parser_args.no_file)
+  
 
 if __name__ == '__main__':
 
