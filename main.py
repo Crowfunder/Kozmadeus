@@ -13,7 +13,8 @@ version_current = 'v0.0.1dev'
 restore_flair = ('Unable to run. Please restore the '
                 'files from Options!')
 separator = ('---------------------------------'
-             '------------------------------')
+             '---------------------------------'
+             '--------------')
 
 # Function that checks github for updates
 # Returns version fetched from github as string
@@ -25,10 +26,27 @@ def CheckUpdates():
   if os.path.isfile(version_filename):
     DeleteFile(version_filename)
       
-  DownloadFile(version_url)
+  try:
+    DownloadFile(version_url)
   
-  with open(version_filename, 'r') as version_file:
-    return version_file.read()
+    with open(version_filename, 'r') as version_file:
+      version_github = version_file.read()
+      
+    # Strip string out of newlines etc
+    version_github = re.sub(r"[\n\t\s]*", "", version_github)
+        
+    print('\n\nCurrent version: ', version_current)
+    print('Github version : ', version_github)
+        
+    if version_github != version_current:
+      print('Updates available! \nDownload at: '
+            'https://github.com/Crowfunder/Kozmadeus/releases\n')
+    
+  except:
+    print('Warning: Unable to fetch updates!\n'
+          'Check your internet connection.')
+  
+  print(separator)
 
 
 # Function for files restoration
@@ -180,21 +198,8 @@ def CliMenu():
     
   # Check for updates
   if not parser_args.skip_update:
-    try:
-      print(separator)
-      version_github = CheckUpdates()
-      
-      print('Current version: ', version_current)
-      print('Github version : ', version_github)
-      
-      if version_github != version_current:
-        print('Updates available! \nDownload at: '
-              'https://github.com/Crowfunder/Kozmadeus/releases\n')
-        print(separator)
-    
-    except:
-      print('Warning: Unable to fetch updates!\n'
-            'Check your internet connection.')
+    print(separator)
+    CheckUpdates()
     
   template = 'template_' + parser_args.type
   
