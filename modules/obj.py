@@ -14,6 +14,13 @@
 
 import gc
 
+module_data = {
+    'Name'       : 'obj',
+    'Mesh'       : True,
+    'Armature'   : False,
+    'Animations' : False
+}
+
 def Extract(file_name):
     with open(file_name, 'r') as f:
         args     = dict()

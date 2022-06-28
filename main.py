@@ -16,6 +16,25 @@ separator = ('---------------------------------'
              '---------------------------------'
              '--------------')
 
+# Function that outputs module data
+def ModuleData():
+  
+  print('List of installed modules:\n')
+  print(separator[0:29])
+  
+  for module_name in modules.__modules__:
+    
+    module = modules.__modules__[module_name]
+    data = module.module_data
+    
+    for key in data:
+      print(f'{key} : {data[key]}')
+      
+    print(separator[0:29])
+    
+  print('Remember not to install any untrustworthy '
+        'modules!\nThey pose real danger!')
+
 # Function that checks github for updates
 # Returns version fetched from github as string
 def CheckUpdates():
@@ -45,8 +64,6 @@ def CheckUpdates():
   except:
     print('Warning: Unable to fetch updates!\n'
           'Check your internet connection.')
-  
-  print(separator)
 
 
 # Function for files restoration
@@ -72,7 +89,8 @@ def RestoreFiles():
           'Check your internet connection.')
 
 
-
+# Export args data to the output file
+# Based on the selected template
 def ExportXML(file_name, template, args):
 
   try:
@@ -162,7 +180,7 @@ def Main(file_names, template, no_export_file):
 
     print(f'ERROR: Module not found or corrupted!\n{restore_flair}')
 
-  print(separator)
+
 
 # Command Line Interface, invoked if main is invoked 
 # instead of gui.
@@ -188,22 +206,31 @@ def CliMenu():
   parser.add_argument('--restore-files', action='store_true',
                       help='Restore modules and templates on start')
   parser.add_argument('--skip-update', action='store_true', 
-                      help='Skips update check on start')
+                      help='Skip update check on start')
+  parser.add_argument('--modules-list', action='store_true', 
+                      help='List all installed modules')
   
   parser_args = parser.parse_args()
   
-  # Make use of argparse args
-  if parser_args.restore_files:
-    RestoreFiles()
+  # List installed modules
+  # SCRIPT DOESN'T RUN PAST THAT
+  if parser_args.modules_list:
+    ModuleData()
     
-  # Check for updates
-  if not parser_args.skip_update:
-    print(separator)
-    CheckUpdates()
-    
-  template = 'template_' + parser_args.type
+  else:
   
-  Main(parser_args.file_names, template, parser_args.no_file)
+    # Make use of argparse args
+    if parser_args.restore_files:
+      RestoreFiles()
+      print(separator)
+      
+    # Check for updates
+    if not parser_args.skip_update:
+      CheckUpdates()
+      print(separator)
+    
+    template = 'template_' + parser_args.type
+    Main(parser_args.file_names, template, parser_args.no_file)
   
 
 if __name__ == '__main__':
