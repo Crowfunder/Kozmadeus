@@ -38,21 +38,20 @@ def RestoreFiles():
 
   restore_url = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/restore.zip'
   restore_filename = 'restore.zip'
-  
-  if not os.path.isfile(restore_filename):
     
-    try:
+  try:
+    if not os.path.isfile(restore_filename):
       print('Downloading files...')
       DownloadFile(restore_url)
       
-      print('Unpacking...')
-      with ZipFile(restore_filename, 'r') as zip_file:
-        zip_file.extractall()
-        print('Success! Files restored.')
+    print('Unpacking...')
+    with ZipFile(restore_filename, 'r') as zip_file:
+      zip_file.extractall()
+      print('Success! Files restored.')
 
-    except:
-      print('Error: Unable to download!\n'
-            'Check your internet connection.')
+  except:
+    print('Error: Unable to download!\n'
+          'Check your internet connection.')
 
 
 
