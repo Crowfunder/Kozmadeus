@@ -5,3 +5,7 @@ build.bat
 Kozmadeus.spec
 venv/
 .vscode/
+main.dist/
+main.build/
+gui.dist/
+gui.build/
