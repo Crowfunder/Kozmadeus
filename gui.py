@@ -6,7 +6,7 @@ from main import *
 url_twitter = 'https://twitter.com/crowfunder'
 url_github  = 'https://github.com/Crowfunder/Kozmadeus'
 url_manual  = 'https://github.com/Crowfunder/Kozmadeus/wiki'
-url_bugs    = 'https://github.com/Crowfunder/Kozmadeus/issues'
+url_bugs    = 'https://github.com/Crowfunder/Kozmadeus/discussions/categories/bugs-issues'
 
 def WindowAbout():
   
@@ -56,7 +56,7 @@ def WindowAbout():
            ]
   
   window_about = sg.Window('About', layout, element_justification='c',
-                           icon='assets/kozmadeus.ico', finalize=True)
+                           finalize=True)
   window_about.bind('<Escape>', 'Exit')
   
   # Bring window to front
@@ -76,16 +76,6 @@ def WindowAbout():
       OpenURL(url_twitter)
 
 def Menu():
-
-  # Retrieve a list of file types based on the modules.
-  # '__modules__' is a dict of all modules' names and objects
-  # Refer to 'modules/__init__.py' for relevant code. 
-  file_types_list = [] 
-  for extension in modules.__modules__.keys():
-    extension = '*.' + extension
-    file_type_part = ('Model', extension)
-    file_types_list.append(file_type_part)
-
 
   # Define the shortcut menubar buttons as strings
   # to shorten the events-related code
@@ -202,8 +192,7 @@ def Menu():
            ]
 
   window = sg.Window(f'Kozmadeus {version_current}', layout, 
-                       element_justification='c', icon='assets/kozmadeus.ico',
-                     	 finalize=True)
+                       element_justification='c', finalize=True)
       
   # Define simpler to read shortcut events
   window.bind('<Control-o>', 'Ctrl-O')
@@ -288,13 +277,13 @@ def Menu():
         window['_DONE_'].Update('')
               
         # Get the user settings
-        if window['_ARTICULATED-MODE_'].Get() == True:
+        if window['_ARTICULATED-MODE_'].Get():
           template = 'template_articulated'
-        elif window['_STATIC-MODE_'].Get() == True:
+        elif window['_STATIC-MODE_'].Get():
           template = 'template_static'
 
-        if file_names != []:
-          # Main(file_names, template, False)
+        if file_names:
+          Main(file_names, template, False)
           window['_DONE_'].Update('Done!')
           window.ding()
           print(separator)

@@ -1,12 +1,12 @@
 import re
 import gc
-import modules
 import os.path
 import argparse
 from zipfile import ZipFile
 from os import remove as DeleteFile
-from os import makedirs as MakeDirs
 from wget import download as DownloadFile
+
+import modules
 
 # Defining few necessary consts
 version_current = 'v0.0.1dev'
@@ -15,6 +15,15 @@ restore_flair = ('Unable to run. Please restore the '
 separator = ('---------------------------------'
              '---------------------------------'
              '--------------')
+
+# Retrieve a list of file types based on the modules.
+# '__modules__' is a dict of all modules' names and objects
+# Refer to 'modules/__init__.py' for relevant code. 
+file_types_list = [] 
+for extension in modules.__modules__.keys():
+  extension = '*.' + extension
+  file_type_part = ('Model', extension)
+  file_types_list.append(file_type_part)
 
 # Function that outputs module data
 def ModuleData():
@@ -103,14 +112,12 @@ def ExportXML(file_name, template, args):
     # In case a file with the same name exists
     # patch up a new file name.
     file_number = 1
-    old_name = export_file
     while os.path.isfile(export_file):
-      export_file = f'({file_number})' + old_name
+      export_file = file_name.rsplit('.', 1)[0] + f'({file_number})' + '.xml'
       file_number += 1
 
     # Assure the output dir exists
-    MakeDirs('output', exist_ok=True)
-    with open(f'output/{export_file}', 'w+') as o, \
+    with open(f'{export_file}', 'w+') as o, \
          open(f'templates/{template}', 'r') as i:
 
       # Write to output file using regex substitution
@@ -123,7 +130,7 @@ def ExportXML(file_name, template, args):
           line = regex.sub(args[regex.search(line).group(1)], line)
 
         o.write(line)
-    print(f'Finished writing to output/{o.name}.')
+    print(f'Finished writing to {o.name}.')
 
   except FileNotFoundError:
     print(f'Error: Template files not found!\n{restore_flair}')
@@ -149,7 +156,7 @@ def ProcessModules(file_name):
 
 def Main(file_names, template, no_export_file):
 
-  if modules.__modules__ == {}:
+  if not modules.__modules__:
     raise Exception(f'Error: No modules found!\n{restore_flair}')
 
   try:
@@ -176,7 +183,7 @@ def Main(file_names, template, no_export_file):
     
       else:
 
-        return args
+        print(args)
 
   except AttributeError:
 
@@ -232,7 +239,7 @@ def CliMenu():
       print(separator)
     
     template = 'template_' + parser_args.type
-    Main(parser_args.file_names, template, parser_args.no_file)
+    Main(parser_args.files_list, template, parser_args.no_file)
   
 
 if __name__ == '__main__':
