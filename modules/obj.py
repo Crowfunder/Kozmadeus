@@ -15,7 +15,7 @@
 import gc
 
 module_data = {
-    'Name'       : 'obj',
+    'Name'       : 'Wavefront',
     'Mesh'       : True,
     'Armature'   : False,
     'Animations' : False

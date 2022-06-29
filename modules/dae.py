@@ -7,7 +7,7 @@
 #####################
 
 module_data = {
-    'Name'       : 'dae',
+    'Name'       : 'Collada',
     'Mesh'       : True,
     'Armature'   : True,
     'Animations' : False
