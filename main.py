@@ -61,9 +61,10 @@ def CheckUpdates():
       print('Updates available! \nDownload at: '
             'https://github.com/Crowfunder/Kozmadeus/releases\n')
     
-  except:
+  except Exception as exception:
     print('Warning: Unable to fetch updates!\n'
           'Check your internet connection.')
+    print(exception)
 
 
 # Function for files restoration
@@ -84,9 +85,10 @@ def RestoreFiles():
       zip_file.extractall()
       print('Success! Files restored.')
 
-  except:
+  except Exception as exception:
     print('Error: Unable to download!\n'
           'Check your internet connection.')
+    print(exception)
 
 
 # Export args data to the output file
