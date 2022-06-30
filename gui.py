@@ -192,7 +192,7 @@ def Menu():
            ]
 
   window = sg.Window(f'Kozmadeus {version_current}', layout, 
-                       element_justification='c', finalize=True)
+                       element_justification='c', icon='assets/kozmadeus.ico', finalize=True)
       
   # Define simpler to read shortcut events
   window.bind('<Control-o>', 'Ctrl-O')

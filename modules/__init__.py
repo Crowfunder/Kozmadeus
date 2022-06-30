@@ -1,14 +1,17 @@
-# A workaround to get all modules recursively imported
-# and a dictionary of modules' names + objects. 
+# A workaround to get a dictionary of modules' names + objects. 
 #
-# Source:  
+# Previous Source:  
 # https://stackoverflow.com/questions/3365740/how-to-import-all-submodules
+#
+# Had to be rewritten since pkgutil.walk_packages() is broken with Nuitka
+# New source: https://github.com/Nuitka/Nuitka/issues/1646
 
 import pkgutil
 
 __modules__ = {}
-for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):
-    _module = loader.find_module(module_name).load_module(module_name)
-    __modules__[module_name] = _module
-    globals()[module_name] = _module
+for module_class in pkgutil.iter_modules(__path__):
+    
+    module_name = module_class.name
+    module_object = pkgutil.resolve_name('modules.' + module_name)
+    __modules__[module_name] = module_object
 
