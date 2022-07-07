@@ -165,29 +165,28 @@ def Main(file_names, template, no_export_file):
     
       print(fr'''Processing "{file_name}"...''')
       Extract = ProcessModules(file_name)
-      args = Extract(file_name)
+      geometries = Extract(file_name)
 
-      # If the model has bones, swap the template
-      # Needs a handle for animations (?)
-      if args['bones'] != '':
-        template += '_bones'
+      for args in geometries:
 
-      else:
-        del args['bones']
+        # If the model has bones, swap the template
+        # Needs a handle for animations (?)
+        if args['bones'] != '':
+          template += '_bones'
 
-      if not no_export_file:
-        ExportXML(file_name, template, args)
+        if not no_export_file:
+          ExportXML(file_name, template, args)
+      
+        else:
+
+          print(args)
         
-        del args
-        gc.collect()
-    
-      else:
-
-        print(args)
+      del geometries
+      gc.collect()
 
   except AttributeError:
 
-    print(f'ERROR: Module not found or corrupted!\n{restore_flair}')
+    print(f'ERROR: Module not found or corrupted!')
 
 
 

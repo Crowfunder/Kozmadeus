@@ -1,11 +1,3 @@
-#####################
-# SUPPORTS:         #
-#                   #
-# mesh:       YES   #
-# armature:   NO    #
-# animations: NO    #
-#####################
-
 #########################################
 # Credits: Puzovoz                      #
 # Based on:                             #
@@ -18,16 +10,18 @@ module_data = {
     'Name'       : 'Wavefront',
     'Mesh'       : True,
     'Armature'   : False,
-    'Animations' : False
+    'Animations' : False,
+    'Multimesh'  : False
 }
 
 def Extract(file_name):
-    with open(file_name, 'r') as f:
+    with open(file_name, 'r') as file:
         args     = dict()
         faces    = list()
         indices  = list()
         vertices = list()
-        lines = f.readlines()
+        geometries = list()
+        lines = file.readlines()
     
         print('Reading input model file.')
         print('Calculating indices...')
@@ -96,4 +90,5 @@ def Extract(file_name):
         args['bones']      = ''
 
         gc.collect()
-        return args
+        geometries.append(args)
+        return geometries
