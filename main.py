@@ -1,5 +1,7 @@
 import re
 import gc
+import sys
+import os
 import os.path
 import argparse
 from zipfile import ZipFile
@@ -15,6 +17,19 @@ restore_flair = ('Unable to run. Please restore the '
 separator = ('---------------------------------'
              '---------------------------------'
              '--------------')
+
+# Class for disabling the output log
+# strictly for --no-file option
+# Source: https://stackoverflow.com/questions/8391411/how-to-block-calls-to-print
+
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
 
 # Retrieve a list of file types based on the modules.
 # '__modules__' is a dict of all modules' names and objects
@@ -181,6 +196,9 @@ def Main(file_names, template, no_export_file):
 
           print(args)
         
+      if no_export_file:
+        return geometries
+      
       del geometries
       gc.collect()
       print(separator)
@@ -194,6 +212,25 @@ def Main(file_names, template, no_export_file):
 # Command Line Interface, invoked if main is invoked 
 # instead of gui.
 def CliMenu():
+
+  # Custom action for listing modules
+  # Source: https://stackoverflow.com/questions/34352405/python-argparse-help-like-option
+  class modules_action(argparse.Action):
+    def __init__(self,
+                 option_strings,
+                 dest=argparse.SUPPRESS,
+                 default=argparse.SUPPRESS,
+                 help=None):
+        super(modules_action, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        ModuleData()
+        parser.exit()
 
   # Defining argparse args
   # A similar mess to that of GUI defining
@@ -211,34 +248,44 @@ def CliMenu():
   parser.add_argument('-t', '--type', choices=['articulated', 'static'],
                       default='articulated', help='Output model type choice')
   parser.add_argument('--no-file', action='store_true',
-                      help='Output raw data, no write to xml files')
+                      help='Output raw data, no write to xml files or logs.\n'
+                           'This argument also imposes skip update and '
+                           'skip files restore.')
   parser.add_argument('--restore-files', action='store_true',
                       help='Restore modules and templates on start')
   parser.add_argument('--skip-update', action='store_true', 
                       help='Skip update check on start')
-  parser.add_argument('--modules-list', action='store_true', 
+  parser.add_argument('--modules-list', action=modules_action, 
                       help='List all installed modules')
   
   parser_args = parser.parse_args()
   
-  # List installed modules
-  # SCRIPT DOESN'T RUN PAST THAT
-  if parser_args.modules_list:
-    ModuleData()
+  # Make sure all printing arguments are disabled
+  if parser_args.no_file:
+    parser_args.restore_files = False
+    parser_args.skip_update   = True
+
+  # Make use of argparse args
+  # Restore files
+  if parser_args.restore_files:
+    RestoreFiles()
+    print(separator)
     
+  # Check for updates
+  if not parser_args.skip_update:
+    CheckUpdates()
+    print(separator)
+
+  template = 'template_' + parser_args.type
+
+  if parser_args.no_file:
+    with HiddenPrints():
+      geometry = Main(parser_args.files_list, template, parser_args.no_file)
+
+    print(geometry)
+    del geometry
+
   else:
-  
-    # Make use of argparse args
-    if parser_args.restore_files:
-      RestoreFiles()
-      print(separator)
-      
-    # Check for updates
-    if not parser_args.skip_update:
-      CheckUpdates()
-      print(separator)
-    
-    template = 'template_' + parser_args.type
     Main(parser_args.files_list, template, parser_args.no_file)
   
 
