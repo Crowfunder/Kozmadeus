@@ -56,7 +56,7 @@ def WindowAbout():
            ]
   
   window_about = sg.Window('About', layout, element_justification='c',
-                           finalize=True)
+                           icon='assets/kozmadeus.ico', finalize=True)
   window_about.bind('<Escape>', 'Exit')
   
   # Bring window to front
@@ -118,7 +118,7 @@ def Menu():
                   [
                     '&About',
                     '&Manual',
-                    '&Report a bug'
+                    '&Report a Bug'
                   ]  
               ]
             ]
@@ -210,6 +210,10 @@ def Menu():
   while True:
     try:
       
+      # Refresh the buttons when the loop cycle is done
+      window['Submit'].Update(disabled=False)
+      window.bind('<Return>', 'Submit')
+      
       event, values = window.Read()
       
       # Program exit event
@@ -265,7 +269,7 @@ def Menu():
         window.enable()
         window.bring_to_front()
         
-      elif event == 'Report a bug':
+      elif event == 'Report a Bug':
         OpenURL(url_bugs)
 
 
@@ -275,6 +279,8 @@ def Menu():
       
       elif event == 'Submit':
         window['_DONE_'].Update('')
+        window['Submit'].Update(disabled=True)
+        window.bind('<Return>', 'null')
               
         # Get the user settings
         if window['_ARTICULATED-MODE_'].Get():
@@ -286,14 +292,13 @@ def Menu():
           Main(file_names, template, False)
           window['_DONE_'].Update('Done!')
           window.ding()
-          print(separator)
-          
+
         else:
           raise Exception('Please select a file!')
         
               
     except Exception as exception:
-      print(exception)
+      print('Unhandled exception has occured:\n', exception)
       print(separator)
 
 

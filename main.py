@@ -121,7 +121,7 @@ def ExportXML(file_name, template, args):
          open(f'templates/{template}', 'r') as i:
 
       # Write to output file using regex substitution
-      print(f'Writing output with {template}...')    
+      print(f'Writing output with "{template}"...')    
       regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
 
       for line in i:
@@ -130,7 +130,7 @@ def ExportXML(file_name, template, args):
           line = regex.sub(args[regex.search(line).group(1)], line)
 
         o.write(line)
-    print(f'Finished writing to {o.name}.')
+    print(f'Finished writing to "{o.name}"')
 
   except FileNotFoundError:
     print(f'Error: Template files not found!\n{restore_flair}')
@@ -183,10 +183,11 @@ def Main(file_names, template, no_export_file):
         
       del geometries
       gc.collect()
+      print(separator)
 
   except AttributeError:
 
-    print(f'ERROR: Module not found or corrupted!')
+    print(f'Error: Module not found or corrupted!')
 
 
 

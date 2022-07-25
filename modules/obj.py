@@ -16,15 +16,16 @@ module_data = {
 
 def Extract(file_name):
     with open(file_name, 'r') as file:
-        args     = dict()
-        faces    = list()
-        indices  = list()
-        vertices = list()
+        args       = dict()
+        faces      = list()
+        indices    = list()
+        vertices   = list()
         geometries = list()
         lines = file.readlines()
     
         print('Reading input model file.')
         print('Calculating indices...')
+        print('Calculating min/max extents...')
         
         for line in lines:
             # Store faces that determine the numbers for indices
@@ -34,13 +35,14 @@ def Extract(file_name):
                     if indices_count == 2: args['mode'] = 'LINES'
                     if indices_count == 3: args['mode'] = 'TRIANGLES'
                     if indices_count == 4: args['mode'] = 'QUADS'
-            
+
                 for face in line.split()[1:]:
                     if face not in faces: faces.append(face.replace('\n', ''))
                     indices.append(faces.index(face))
         
             # Calculate min/max extent for vertices
             if line[:2] == 'v ':
+                
                 # Initialize values with first vertex
                 if 'min_extent' not in vars() and 'max_extent' not in vars():
                     min_extent = [float(val) for val in line.split()[1:]]
@@ -73,7 +75,8 @@ def Extract(file_name):
             
             # Position coordinates, XYZ
             vertices.extend(v [int(face_indices[0])-1].split()[1:])
-            
+
+
         del faces
         del lines
         del v, vn, vt
