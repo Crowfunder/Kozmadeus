@@ -18,19 +18,6 @@ separator = ('---------------------------------'
              '---------------------------------'
              '--------------')
 
-# Class for disabling the output log
-# strictly for --no-file option
-# Source: https://stackoverflow.com/questions/8391411/how-to-block-calls-to-print
-
-class HiddenPrints:
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout.close()
-        sys.stdout = self._original_stdout
-
 # Retrieve a list of file types based on the modules.
 # '__modules__' is a dict of all modules' names and objects
 # Refer to 'modules/__init__.py' for relevant code. 
@@ -213,6 +200,23 @@ def Main(file_names, template, no_export_file):
 # instead of gui.
 def CliMenu():
 
+  # Class for disabling the output log
+  # strictly for --silent option
+  # Source: https://stackoverflow.com/questions/8391411/how-to-block-calls-to-print
+  class HiddenPrints:
+      def __init__(self, silent):
+        self.silent = silent
+
+      def __enter__(self):
+          if self.silent:
+            self._original_stdout = sys.stdout
+            sys.stdout = open(os.devnull, 'w')
+
+      def __exit__(self, exc_type, exc_val, exc_tb):
+          if self.silent:
+            sys.stdout.close()
+            sys.stdout = self._original_stdout
+
   # Custom action for listing modules
   # Source: https://stackoverflow.com/questions/34352405/python-argparse-help-like-option
   class modules_action(argparse.Action):
@@ -247,10 +251,12 @@ def CliMenu():
                       help='<Required> Input the files to process')
   parser.add_argument('-t', '--type', choices=['articulated', 'static'],
                       default='articulated', help='Output model type choice')
+  parser.add_argument('-s', '--silent', action='store_true',
+                      help='Disable all command line messages\n'
+                           'Note: Does not apply for unhandled exceptions')
   parser.add_argument('--no-file', action='store_true',
-                      help='Output raw data, no write to xml files or logs.\n'
-                           'This argument also imposes skip update and '
-                           'skip files restore.')
+                      help='Output raw data, no write to xml files\n'
+                            'This argument also implies --silent')
   parser.add_argument('--restore-files', action='store_true',
                       help='Restore modules and templates on start')
   parser.add_argument('--skip-update', action='store_true', 
@@ -260,33 +266,28 @@ def CliMenu():
   
   parser_args = parser.parse_args()
   
-  # Make sure all printing arguments are disabled
+  # --no-file implies --silent by default
   if parser_args.no_file:
-    parser_args.restore_files = False
-    parser_args.skip_update   = True
+    parser_args.silent = True
 
-  # Make use of argparse args
-  # Restore files
-  if parser_args.restore_files:
-    RestoreFiles()
-    print(separator)
-    
-  # Check for updates
-  if not parser_args.skip_update:
-    CheckUpdates()
-    print(separator)
+  with HiddenPrints(parser_args.silent):
 
-  template = 'template_' + parser_args.type
+    # Make use of argparse args
+    # Restore files
+    if parser_args.restore_files:
+      RestoreFiles()
+      print(separator)
+      
+    # Check for updates
+    if not parser_args.skip_update:
+      CheckUpdates()
+      print(separator)
+
+    template = 'template_' + parser_args.type
+    geometry = Main(parser_args.files_list, template, parser_args.no_file)
 
   if parser_args.no_file:
-    with HiddenPrints():
-      geometry = Main(parser_args.files_list, template, parser_args.no_file)
-
     print(geometry)
-    del geometry
-
-  else:
-    Main(parser_args.files_list, template, parser_args.no_file)
   
 
 if __name__ == '__main__':
