@@ -178,14 +178,10 @@ def Main(file_names, template, no_export_file):
 
         if not no_export_file:
           ExportXML(file_name, template, args)
-      
-        else:
-
-          print(args)
         
       if no_export_file:
         return geometries
-      
+
       del geometries
       gc.collect()
       print(separator)
