@@ -170,14 +170,17 @@ def Main(file_names, template, no_export_file):
       geometries = Extract(file_name)
 
       for args in geometries:
-
+        
         # If the model has bones, swap the template
-        # Needs a handle for animations (?)
+        template_old = template
         if args['bones'] != '':
           template += '_bones'
 
         if not no_export_file:
           ExportXML(file_name, template, args)
+          
+        # Restore the old template
+        template = template_old
         
       if no_export_file:
         return geometries
