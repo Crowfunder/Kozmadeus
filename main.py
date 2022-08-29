@@ -152,46 +152,41 @@ def ProcessModules(file_name):
 
   else:
 
-    raise Exception('Error: Unrecognized file type!')
+    raise Exception('Unrecognized file type!')
 
 
 
 def Main(file_names, template, no_export_file):
 
   if not modules.__modules__:
-    raise Exception(f'Error: No modules found!\n{restore_flair}')
+    raise Exception(f'No modules found!\n{restore_flair}')
 
-  try:
+  for file_name in file_names:
+  
+    print(fr'''Processing "{file_name}"...''')
+    Extract = ProcessModules(file_name)
+    geometries = Extract(file_name)
 
-    for file_name in file_names:
-    
-      print(fr'''Processing "{file_name}"...''')
-      Extract = ProcessModules(file_name)
-      geometries = Extract(file_name)
+    for args in geometries:
+      
+      # If the model has bones, swap the template
+      template_old = template
+      if args['bones'] != '':
+        template += '_bones'
 
-      for args in geometries:
+      if not no_export_file:
+        ExportXML(file_name, template, args)
         
-        # If the model has bones, swap the template
-        template_old = template
-        if args['bones'] != '':
-          template += '_bones'
+      # Restore the old template
+      template = template_old
+      
+    if no_export_file:
+      return geometries
 
-        if not no_export_file:
-          ExportXML(file_name, template, args)
-          
-        # Restore the old template
-        template = template_old
-        
-      if no_export_file:
-        return geometries
+    del geometries
+    gc.collect()
+    print(separator)
 
-      del geometries
-      gc.collect()
-      print(separator)
-
-  except AttributeError:
-
-    print(f'Error: Module not found or corrupted!')
 
 
 
