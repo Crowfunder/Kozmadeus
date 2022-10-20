@@ -237,6 +237,7 @@ def CliMenu():
                                                 'Spiral Knights XML.'),
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    epilog=('Script written with love by Crowfunder\n'
+                                           f'Version: {version_current}\n'
                                            'Credits: Puzovoz, XanTheDragon, '
                                            'Kirbeh \nGithub: '
                                            'https://github.com/Crowfunder/Kozmadeus'))
@@ -252,7 +253,7 @@ def CliMenu():
                       help='Output raw data, no write to xml files\n'
                             'This argument also implies --silent')
   parser.add_argument('--restore-files', action='store_true',
-                      help='Restore modules and templates on start')
+                      help='Restore templates on start')
   parser.add_argument('--skip-update', action='store_true', 
                       help='Skip update check on start')
   parser.add_argument('--modules-list', action=modules_action, 
