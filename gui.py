@@ -179,7 +179,7 @@ def Menu():
                     ],
                     [
                       sg.Button('Clear Console', pad=((5,200),(0,0))),
-                      sg.Text('', text_color='lawn green', key='_DONE_', size=(5,1)),
+                      sg.Text('', text_color='lawn green', key='_STATUS_', size=(5,1)),
                     ]
                  ]
 
@@ -278,7 +278,7 @@ def Menu():
         window['_OUTPUT_'].Update('')
       
       elif event == 'Submit':
-        window['_DONE_'].Update('')
+        window['_STATUS_'].Update('')
         window['Submit'].Update(disabled=True)
         window.bind('<Return>', 'null')
               
@@ -290,14 +290,17 @@ def Menu():
 
         if file_names:
           Main(file_names, template, False)
-          window['_DONE_'].Update('Done!')
+          window['_STATUS_'].Update('Done!')
+          window['_STATUS_'].Update(text_color='lawn green')
           window.ding()
 
         else:
-          raise Exception('Please select a file!')
+          print('Please select a file!')
         
               
     except Exception as exception:
+      window['_STATUS_'].Update('Error!')
+      window['_STATUS_'].Update(text_color='red')
       print('Unhandled exception has occured:\n', exception)
       print(separator)
 
