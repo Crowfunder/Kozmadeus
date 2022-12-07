@@ -1,12 +1,13 @@
 from webbrowser import open as OpenURL
 import PySimpleGUI as sg
+
 from main import *
 
 # Define a few constants
-url_twitter = 'https://twitter.com/crowfunder'
-url_github  = 'https://github.com/Crowfunder/Kozmadeus'
-url_manual  = 'https://github.com/Crowfunder/Kozmadeus/wiki'
-url_bugs    = 'https://github.com/Crowfunder/Kozmadeus/discussions/categories/bugs-issues'
+URL_TWITTER = 'https://twitter.com/crowfunder'
+URL_GITHUB  = 'https://github.com/Crowfunder/Kozmadeus'
+URL_MANUAL  = 'https://github.com/Crowfunder/Kozmadeus/wiki'
+URL_BUGS    = 'https://github.com/Crowfunder/Kozmadeus/discussions/categories/bugs-issues'
 
 def WindowAbout():
   
@@ -70,12 +71,12 @@ def WindowAbout():
       break
     
     elif event == '_URL-GITHUB_':
-      OpenURL(url_github)
+      OpenURL(URL_GITHUB)
     
     elif event == '_URL-TWITTER_':
-      OpenURL(url_twitter)
+      OpenURL(URL_TWITTER)
 
-def Menu():
+def GuiMenu():
 
   # Define the shortcut menubar buttons as strings
   # to shorten the events-related code
@@ -191,7 +192,7 @@ def Menu():
               ]
            ]
 
-  window = sg.Window(f'Kozmadeus {version_current}', layout, 
+  window = sg.Window(f'Kozmadeus {VERSION_CURRENT}', layout, 
                        element_justification='c', icon='assets/kozmadeus.ico', finalize=True)
       
   # Define simpler to read shortcut events
@@ -250,18 +251,18 @@ def Menu():
       # Menubar remaining events
       elif event == 'Modules':
         ModuleData()
-        print(separator)
+        print(SEPARATOR)
 
       elif event == 'Restore Files':
         RestoreFiles()
-        print(separator)
+        print(SEPARATOR)
 
       elif event == 'Check for Updates':
         CheckUpdates()
-        print(separator)
+        print(SEPARATOR)
 
       elif event == 'Manual':
-        OpenURL(url_manual)
+        OpenURL(URL_MANUAL)
 
       elif event == 'About':
         window.disable()
@@ -270,7 +271,7 @@ def Menu():
         window.bring_to_front()
         
       elif event == 'Report a Bug':
-        OpenURL(url_bugs)
+        OpenURL(URL_BUGS)
 
 
       # Button related events and others
@@ -302,8 +303,8 @@ def Menu():
       window['_STATUS_'].Update('Error!')
       window['_STATUS_'].Update(text_color='red')
       print('Unhandled exception has occured:\n', exception)
-      print(separator)
+      print(SEPARATOR)
 
 
 if __name__ == '__main__':
-  Menu()
+  GuiMenu()
