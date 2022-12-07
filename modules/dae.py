@@ -62,7 +62,7 @@ def Extract(file_name):
             # - Fix normals if necessary
             #
             ##############################################
-            
+
             # Function used for reordering data to comply
             # with new indices
             def PrimitiveReorder(prim_list, old_indices, new_indices):
@@ -91,12 +91,13 @@ def Extract(file_name):
             
             for primitives in geometry.primitives:
                 
-                if len(primitives.normal) != len(primitives.vertex):
-                    
-                    print('Will triangulate geometries to fix '
-                          'missing normals, if necessary...')
-                    flag_mode_convert = True
-                    break
+                if primitives.normal is not None:
+                    if len(primitives.normal) != len(primitives.vertex):
+                        
+                        print('Will triangulate geometries to fix '
+                            'missing normals, if necessary...')
+                        flag_mode_convert = True
+                        break
 
                 elif type(primitives) != old_mode:
 
@@ -163,15 +164,26 @@ def Extract(file_name):
 
                     indices_end = max(indices)
 
+
             # Determine the model mode
             if type(primitives) is collada.lineset.LineSet:
                 args['mode'] = 'LINES'
+                print('Warning: Experimental geometry mode: ', type(primitives),
+                      '\nThe results may be faulty.')
+                
             elif type(primitives) is collada.triangleset.TriangleSet:
                 args['mode'] = 'TRIANGLES'
+                
             elif type(primitives) is collada.polylist.Polygon:
                 args['mode'] = 'QUADS'
+                print('Warning: Experimental geometry mode: ', type(primitives),
+                      '\nThe results may be faulty.')
+                
             elif type(primitives) is collada.polylist.Polylist:
                 args['mode'] = 'QUADS'
+                print('Warning: Experimental Geometry Mode: ', type(primitives),
+                      '\nThe results may be faulty.')
+                
             else:
                 raise Exception('Unrecognized geometry mode!'
                                 '\nFound:', type(primitives))
@@ -211,19 +223,24 @@ def Extract(file_name):
                                 bone_indices = list()
                                 bone_weights = list()
                                 zeros_num = 4 - len(bone_vertex)
-
                                 if len(bone_vertex) > 4:
-                                    raise Exception('Unable to handle more than 4 bone '
-                                                    'weights per vertex.')
+                                    zeros_num = 0
+                                    bone_vertex = bone_vertex[0:4]
+                                    print('Warning: Unable to handle more than 4 bone '
+                                          'weights per vertex. Will cut the extra ones, '
+                                          'but the armature may not work properly.')
+                                   # raise Exception('Unable to handle more than 4 bone '
+                                   #                 'weights per vertex.')
 
                                 # Extract bone weights and indices for single vertex
                                 for bone_index, weight_index in bone_vertex.tolist():
                                     bone_indices.append(float(bone_index))
+
                                     for weight in geom_ctrl.weights.data.tolist()[weight_index]:
                                         bone_weights.append(float(weight))
 
                                 # Fill out the remaining bone slots with 0.0
-                                for i in range(1, zeros_num+1):
+                                for i in range(0, zeros_num):
                                     bone_indices.append(0.0)
                                     bone_weights.append(0.0)
 
