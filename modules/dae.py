@@ -53,7 +53,8 @@ def Extract(file_name):
                       'cause several issues, it is '
                       'recommended to merge them manually.')
 
-            
+
+
             ##############################################
             # Geometry Library Section
             # 
@@ -62,6 +63,7 @@ def Extract(file_name):
             # - Fix normals if necessary
             #
             ##############################################
+
 
             # Function used for reordering data to comply
             # with new indices
@@ -175,15 +177,15 @@ def Extract(file_name):
                 args['mode'] = 'TRIANGLES'
                 
             elif type(primitives) is collada.polylist.Polygon:
-                args['mode'] = 'QUADS'
+                args['mode'] = 'POLYGON'
                 print('Warning: Experimental geometry mode: ', type(primitives),
                       '\nThe results may be faulty.')
                 
             elif type(primitives) is collada.polylist.Polylist:
-                args['mode'] = 'QUADS'
+                args['mode'] = 'POLYGON'
                 print('Warning: Experimental Geometry Mode: ', type(primitives),
                       '\nThe results may be faulty.')
-                
+
             else:
                 raise Exception('Unrecognized geometry mode!'
                                 '\nFound:', type(primitives))
@@ -191,6 +193,7 @@ def Extract(file_name):
             # Finalize Indices
             args['indices']     = str(indices)[1:-1]
             args['indices_end'] = str(indices_end)
+
 
 
             ################################################
@@ -201,6 +204,7 @@ def Extract(file_name):
             #   hierarchy later on.
             #
             ################################################          
+
 
             # Extract armature data from existing controllers
             # (if they exist)
@@ -248,6 +252,7 @@ def Extract(file_name):
                                 bone_slots.append(bone)
                                 
                             break
+
 
 
             ###################################################
@@ -314,8 +319,9 @@ def Extract(file_name):
             
             if args['bones'] != '':
                 del bone_slots
-                
-                
+
+
+
             ##########################################
             # Scenes Library Section
             #
@@ -323,7 +329,8 @@ def Extract(file_name):
             # - Create an Armature Hierarchy XML tree
             #
             ##########################################
-            
+
+
             # ArmatureNodeFinder supports two search modes:
             # - search by connected controllers
             # - search by node name
@@ -427,12 +434,14 @@ def Extract(file_name):
                     # Also, handle an edge case, where for some reason
                     # bone nodes lack any name or id
                     xml_name_node = ET.SubElement(xml_entr_node, 'name')
+                    
                     if 'sid' in main_node.xmlnode.keys():
                         xml_name_node.text = main_node.xmlnode.get('sid')
                     elif 'name' in main_node.xmlnode.keys():
                         xml_name_node.text = main_node.xmlnode.get('name')
                     elif 'id' in main_node.xmlnode.keys():
                         xml_name_node.text = main_node.id
+                        
                     else:
                         nonlocal unnamed_bone_num
                         xml_name_node.text = 'UnnamedBone' + str(unnamed_bone_num)
@@ -481,6 +490,7 @@ def Extract(file_name):
                     print('Creating armature xml tree...')
                     ArmatureNodeToXML(armature_node)
                     args['bone_tree'] = ET.tostring(root_xml_node, encoding='unicode')
+
 
             geometries_num -= 1
             print(f'Done! {geometries_num} remaining.')
