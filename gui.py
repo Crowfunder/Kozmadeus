@@ -1,7 +1,8 @@
 from webbrowser import open as OpenURL
 import PySimpleGUI as sg
 
-from main import *
+from main import RestoreFiles, CheckUpdates, ModuleData, Main
+from main import VERSION_CURRENT, SEPARATOR, FILE_TYPES_LIST
 
 # Define a few constants
 URL_TWITTER = 'https://twitter.com/crowfunder'
@@ -59,8 +60,6 @@ def WindowAbout():
   window_about = sg.Window('About', layout, element_justification='c',
                            icon='assets/kozmadeus.ico', finalize=True)
   window_about.bind('<Escape>', 'Exit')
-  
-  # Bring window to front
   window_about.bring_to_front()
   
   while True:
@@ -123,7 +122,15 @@ def GuiMenu():
                   ]  
               ]
             ]
-  
+  frame_import_opts = [
+                        [
+                          sg.Checkbox('Strip "bones" tag data', visible=True, key='_STRIP-BONES-TAG_',
+                                      tooltip='Necessary for reimporting armors')
+                        ],
+                        [
+                          sg.Combo(['Opt1', 'Opt2'], readonly=True, visible=False, default_value='Opt1')
+                        ]
+                      ]
   frame_output_type = [
                         [
                           sg.Radio('Articulated','OUTPUT_TYPE', default=True,
@@ -145,7 +152,7 @@ def GuiMenu():
                                      expand_x=True)
                         ]
                      ]
-  
+
   column_left = [
                   [
                     sg.Text('Welcome to Kozmadeus!', size=(24,1), 
@@ -154,11 +161,10 @@ def GuiMenu():
                   [
                     sg.Text('Select models to process'), 
                     sg.Input(key='_FILEBROWSE_', enable_events=True, visible=False),
-                    sg.FilesBrowse(file_types=file_types_list, target='_FILEBROWSE_', size=[10,1]),
+                    sg.FilesBrowse(file_types=FILE_TYPES_LIST, target='_FILEBROWSE_', size=[10,1]),
                   ],
                   [
-                    sg.Checkbox('Future Option 1', visible=False),
-                    sg.Combo(['Opt1', 'Opt2'], readonly=True, visible=False, default_value='Opt1')
+                    sg.Frame(layout=frame_import_opts, title='Options', expand_x=True)
                   ],
                   [
                     sg.Frame(layout=frame_output_type, title='Output Type', expand_x=True)
@@ -236,7 +242,7 @@ def GuiMenu():
       elif event in (menubar_open   , 'Ctrl-O'):
         file_names = sg.PopupGetFile('file to open', no_window=True,
                                      multiple_files=True,
-                                     file_types=file_types_list)
+                                     file_types=FILE_TYPES_LIST)
         
         # For some reason, PopupGetFile returns tuple
         # Needs conversion to list
@@ -280,6 +286,8 @@ def GuiMenu():
       
       elif event == 'Submit':
         window['_STATUS_'].Update('')
+        
+        # Lock the "Submit" button
         window['Submit'].Update(disabled=True)
         window.bind('<Return>', 'null')
               
@@ -288,9 +296,12 @@ def GuiMenu():
           template = 'template_articulated'
         elif window['_STATIC-MODE_'].Get():
           template = 'template_static'
+        
+        strip_bones_tag = window['_STRIP-BONES-TAG_'].Get()
 
+        # Start processing the files
         if file_names:
-          Main(file_names, template, False)
+          Main(file_names, template, False, strip_bones_tag)
           window['_STATUS_'].Update('Done!')
           window['_STATUS_'].Update(text_color='lawn green')
           window.ding()

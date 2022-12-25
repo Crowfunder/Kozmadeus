@@ -1,7 +1,9 @@
+import os
 import sys
 import argparse
 
-from main import *
+from main import RestoreFiles, CheckUpdates, ModuleData, Main
+from main import VERSION_CURRENT, SEPARATOR
 
 # Class for disabling the output log
 # strictly for --silent option
@@ -65,13 +67,17 @@ def CliMenu():
                            'Note: Does not apply for unhandled exceptions')
   parser.add_argument('--no-file', action='store_true',
                       help='Output raw data, no write to xml files\n'
-                            'This argument also implies --silent')
+                           'This argument also implies --silent')
   parser.add_argument('--restore-files', action='store_true',
                       help='Restore templates on start')
   parser.add_argument('--skip-update', action='store_true', 
                       help='Skip update check on start')
   parser.add_argument('--modules-list', action=modules_action, 
                       help='List all installed modules')
+  parser.add_argument('--strip-bones-tag', action='store_true',
+                      help='Strip "bones" tag data.\n'
+                           'Necessary for reimporting armors '
+                           'utilizing the pc model armature.')
   
   parser_args = parser.parse_args()
   
@@ -93,7 +99,7 @@ def CliMenu():
       print(SEPARATOR)
 
     template = 'template_' + parser_args.type
-    geometry = Main(parser_args.files_list, template, parser_args.no_file)
+    geometry = Main(parser_args.files_list, template, parser_args.no_file, parser_args.strip_bones_tag)
 
   if parser_args.no_file:
     print(geometry)

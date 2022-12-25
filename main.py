@@ -13,7 +13,7 @@ from components.restore_files import RestoreFiles
 
 # Defining few necessary consts
 RESTORE_FLAIR = ('Unable to run. Please restore the '
-                'files from Options!')
+                 'files from Options!')
 SEPARATOR = ('---------------------------------'
              '---------------------------------'
              '--------------')
@@ -22,11 +22,11 @@ SEPARATOR = ('---------------------------------'
 # Retrieve a list of file types based on the modules.
 # '__modules__' is a dict of all modules' names and objects
 # Refer to 'modules/__init__.py' for relevant code. 
-file_types_list = [] 
+FILE_TYPES_LIST = [] 
 for extension in modules.__modules__.keys():
   extension = '*.' + extension
   file_type_part = ('Model', extension)
-  file_types_list.append(file_type_part)
+  FILE_TYPES_LIST.append(file_type_part)
 
 
 # Function that outputs module data
@@ -103,7 +103,7 @@ def ExportXML(file_name, template, args):
     print(f'Error: Template files not found!\n{RESTORE_FLAIR}')
 
 
-def Main(file_names, template, no_export_file):
+def Main(file_names, template, no_export_file, strip_bones_tag):
 
   if not modules.__modules__:
     raise Exception(f'No modules found!\n{RESTORE_FLAIR}')
@@ -120,6 +120,16 @@ def Main(file_names, template, no_export_file):
       template_old = template
       if args['bones'] != '':
         template += '_bones'
+
+      # Option necessary for importing armors.
+      # Erases "bones" tag to fix armor armature
+      # conflicting with pc model armature.
+      # Also, there needs to be just any value 
+      # in the tag, or SK xml parser will commit die
+      # instantly with little to no elaboration.
+      if strip_bones_tag:
+        print('Stripped bones tag data.')
+        args['bones'] = ' '
 
       if not no_export_file:
         ExportXML(file_name, template, args)
