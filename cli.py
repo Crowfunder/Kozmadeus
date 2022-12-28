@@ -74,8 +74,8 @@ def CliMenu():
                       help='Skip update check on start')
   parser.add_argument('--modules-list', action=modules_action, 
                       help='List all installed modules')
-  parser.add_argument('--strip-bones-tag', action='store_true',
-                      help='Strip "bones" tag data.\n'
+  parser.add_argument('--strip-armature-tree', action='store_true',
+                      help='Strip armature tree data.\n'
                            'Necessary for reimporting armors '
                            'utilizing the pc model armature.')
   
@@ -99,7 +99,7 @@ def CliMenu():
       print(SEPARATOR)
 
     template = 'template_' + parser_args.type
-    geometry = Main(parser_args.files_list, template, parser_args.no_file, parser_args.strip_bones_tag)
+    geometry = Main(parser_args.files_list, template, parser_args.no_file, parser_args.strip_armature_tree)
 
   if parser_args.no_file:
     print(geometry)

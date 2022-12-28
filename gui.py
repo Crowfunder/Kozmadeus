@@ -124,7 +124,7 @@ def GuiMenu():
             ]
   frame_import_opts = [
                         [
-                          sg.Checkbox('Strip "bones" tag data', visible=True, key='_STRIP-BONES-TAG_',
+                          sg.Checkbox('Strip armature tree data', visible=True, key='_STRIP-ARMATURE-TREE_',
                                       tooltip='Necessary for reimporting armors')
                         ],
                         [
@@ -297,11 +297,11 @@ def GuiMenu():
         elif window['_STATIC-MODE_'].Get():
           template = 'template_static'
         
-        strip_bones_tag = window['_STRIP-BONES-TAG_'].Get()
+        strip_armature_tree = window['_STRIP-ARMATURE-TREE_'].Get()
 
         # Start processing the files
         if file_names:
-          Main(file_names, template, False, strip_bones_tag)
+          Main(file_names, template, False, strip_armature_tree)
           window['_STATUS_'].Update('Done!')
           window['_STATUS_'].Update(text_color='lawn green')
           window.ding()

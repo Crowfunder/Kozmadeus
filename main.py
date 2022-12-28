@@ -88,6 +88,7 @@ def ExportXML(file_name, template, args):
          open(f'templates/{template}', 'r') as i:
 
       # Write to output file using regex substitution
+      # Grabbed directly from Bootshuze
       print(f'Writing output with "{template}"...')    
       regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
 
@@ -103,7 +104,7 @@ def ExportXML(file_name, template, args):
     print(f'Error: Template files not found!\n{RESTORE_FLAIR}')
 
 
-def Main(file_names, template, no_export_file, strip_bones_tag):
+def Main(file_names, template, no_export_file, strip_armature_tree):
 
   if not modules.__modules__:
     raise Exception(f'No modules found!\n{RESTORE_FLAIR}')
@@ -121,15 +122,15 @@ def Main(file_names, template, no_export_file, strip_bones_tag):
       if args['bones'] != '':
         template += '_bones'
 
-      # Option necessary for importing armors.
-      # Erases "bones" tag to fix armor armature
-      # conflicting with pc model armature.
-      # Also, there needs to be just any value 
-      # in the tag, or SK xml parser will commit die
-      # instantly with little to no elaboration.
-      if strip_bones_tag:
-        print('Stripped bones tag data.')
-        args['bones'] = ' '
+        # Option necessary for importing armors.
+        # Erases "bones" tag to fix armor armature
+        # conflicting with pc model armature.
+        # Also, there needs to be just any value 
+        # in the tag, or SK xml parser will commit die
+        # instantly with little to no elaboration.
+        if strip_armature_tree:
+          print('Stripped armature tree data.')
+          args['bone_tree'] = ' '
 
       if not no_export_file:
         ExportXML(file_name, template, args)
