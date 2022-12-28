@@ -1,4 +1,5 @@
 import gc
+import re
 import collada
 import xml.etree.ElementTree as ET
 
@@ -327,6 +328,7 @@ def Extract(file_name):
             #
             # - Extract Armature Hierarchy
             # - Create an Armature Hierarchy XML tree
+            # - Fix "args['bones']" if possible
             #
             ##########################################
 
@@ -396,8 +398,8 @@ def Extract(file_name):
                     if not output_node:
                         args['bones'] = ''
                         print('Warning: Unable to locate the armature '
-                            'starting joint node, file may be corrupted.'
-                            '\nArmature will not be imported.')
+                              'starting joint node, file may be corrupted.\n'
+                              'Armature will not be imported.')
                         break
 
                     # Read the <skeleton> xml node data manually.
@@ -408,22 +410,24 @@ def Extract(file_name):
                                 break
                     
 
-                # root_xml_node and unnamed_bone_num
+                # root_xml_node, bones_list and unnamed_bone_num
                 # need to be accessible outside and inside
-                # the recursions, as the former is practically
-                # the ArmatureTreeToXML output, and the latter
-                # has to retain its value over recursions
+                # the recursions, as the root_xml_node is practically
+                # the xmltree output, bones_list contains fixed args['bones']
+                # unnamed_bone_num has to retain its value over recursions
                 # to prevent repetitions in generated bone names
                 root_xml_node = None
+                bones_list = args['bones'].split(', ')
                 armature_node = output_node
                 unnamed_bone_num = 0
 
+                ### BEGIN ArmatureNodeToXML
                 def ArmatureNodeToXML(main_node, path=list(), xml_path=list()):
 
                     # Create a new entry from main_node data
                     # Initiate the tree if path is empty
                     if xml_path == list():
-                        xml_entr_node = ET.Element('entry')
+                        xml_entr_node = ET.Element('root')
                         nonlocal root_xml_node
                         root_xml_node = xml_entr_node
                     else:
@@ -433,6 +437,7 @@ def Extract(file_name):
                     # the other attributes are used as a fallback
                     # Also, handle an edge case, where for some reason
                     # bone nodes lack any name or id
+                    nonlocal bones_list
                     xml_name_node = ET.SubElement(xml_entr_node, 'name')
                     
                     if 'sid' in main_node.xmlnode.keys():
@@ -445,14 +450,25 @@ def Extract(file_name):
                     else:
                         nonlocal unnamed_bone_num
                         xml_name_node.text = 'UnnamedBone' + str(unnamed_bone_num)
-                        args['bones'] += xml_name_node.text
+                        bones_list.append(xml_name_node.text)
                         unnamed_bone_num += 1
+                        
+                    # Attempt to use names instead of sid's if possible
+                    # replacing the names in "bones".
+                    # It's a necessity since SK often uses names instead of sid's
+                    # Should be separate from the previous elif's in case the name
+                    # is not even within the "bones" list.
+                    if 'name' in main_node.xmlnode.keys():
+                        
+                        bone_name = main_node.xmlnode.get('name')
+                        bone_sid_from_name = re.sub('[^0-9a-zA-Z]+', '_', bone_name)
 
-                    if xml_name_node.text == '%ROOT%':
-                        xml_name_node.text = 'ROOT_renamed_bone_' + str(unnamed_bone_num)
-                        args['bones'] += xml_name_node.text
-                        unnamed_bone_num += 1
+                        if bone_sid_from_name in bones_list:
+                            bone_name_index = bones_list.index(bone_sid_from_name)
+                            bones_list[bone_name_index] = bone_name
+                            xml_name_node.text = bone_name
 
+                    # Handle bone transforms
                     xml_trfm_node = ET.SubElement(xml_entr_node, 'transform')
 
                     # There shouldn't be more than a single transform
@@ -464,7 +480,7 @@ def Extract(file_name):
                             xml_mtrx_data = ListFlatten(node_transform.matrix.tolist())
                             xml_mtrx_data = str(xml_mtrx_data)[1:-1]
                             xml_mtrx_node.text = xml_mtrx_data
-                            
+
                         else:
                             raise Exception('Unhandled transform type, found ', type(node_transform))
 
@@ -484,11 +500,13 @@ def Extract(file_name):
                             
                         path.pop(-1)
                         xml_path.pop(-1)
+                ### END ArmatureNodeToXML
 
 
                 if args['bones'] != '':
                     print('Creating armature xml tree...')
                     ArmatureNodeToXML(armature_node)
+                    args['bones'] = str(bones_list)[1:-1].replace("'", "")
                     args['bone_tree'] = ET.tostring(root_xml_node, encoding='unicode')
 
 
