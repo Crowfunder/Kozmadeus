@@ -61,7 +61,9 @@ def CliMenu():
   parser.add_argument('files_list', nargs='+',
                       help='<Required> Input the files to process')
   parser.add_argument('-t', '--type', choices=['articulated', 'static'],
-                      default='articulated', help='Output model type choice')
+                      default='articulated', help='Output model type choice\n'
+                      '- articulated: used for most cases\n'
+                      '- static: used most notably for importing armors')
   parser.add_argument('-s', '--silent', action='store_true',
                       help='Disable all command line messages\n'
                            'Note: Does not apply for unhandled exceptions')
