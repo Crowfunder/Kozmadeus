@@ -134,10 +134,12 @@ def GuiMenu():
   frame_output_type = [
                         [
                           sg.Radio('Articulated','OUTPUT_TYPE', default=True,
-                                    tooltip='Output model as Articulated type',
-                                    key='_ARTICULATED-MODE_'),
+                                    key='_ARTICULATED-MODE_',
+                                    tooltip='Output model as Articulated type\n'
+                                            'used for most cases'),
                           sg.Radio('Static', 'OUTPUT_TYPE', key='_STATIC-MODE_', 
-                                   tooltip='Output model as Static type'),
+                                   tooltip='Output model as Static type\n'
+                                           'used most notably for importing armors'),
                           sg.Radio('Animations\nOnly', 'OUTPUT_TYPE', key='_ANIMATION-MODE_', 
                                    tooltip='Output just the model animations (if they exist)',
                                    visible=False)
