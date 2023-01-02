@@ -11,8 +11,9 @@
       <entry>
         <outer rdepth="1"/>
         <texture>texture.png</texture>
+        <tag>skinned</tag>
         <material>
-          <name>Model/Opaque</name>
+          <name>Model/Skinned/Masked (Soft)</name>          
           <arguments>
             <key class="java.lang.String">Coord Set</key>
             <value class="java.lang.Integer">0</value>
@@ -41,6 +42,7 @@
       </entry>
     </materialMappings>
     <source>model.mxml</source>
+    {{ bone_tree }}
     <meshes>
       <bounds>
         <minExtent>{{ min_extent }}</minExtent>
@@ -49,7 +51,8 @@
       <visible>
         <entry>
           <texture>texture.png</texture>
-          <geometry class="com.threerings.opengl.geometry.config.GeometryConfig$IndexedStored">
+          <tag>skinned</tag> 
+          <geometry class="com.threerings.opengl.geometry.config.GeometryConfig$SkinnedIndexedStored">
             <bounds>
                <minExtent>{{ min_extent }}</minExtent>
                <maxExtent>{{ max_extent }}</maxExtent>>
@@ -94,7 +97,7 @@
                 <stride>64</stride>
                 <offset>52</offset>
                 <floatArray ref="1"/>
-              </vertexArray>  
+              </vertexArray>   
               <end>{{ indices_end }}</end>
             <indices>{{ indices }}</indices>
             <bones>{{ bones }}</bones>

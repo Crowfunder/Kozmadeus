@@ -11,8 +11,9 @@
       <entry>
         <outer rdepth="1"/>
         <texture>texture.png</texture>
+		<tag>skinned</tag>
         <material>
-          <name>Model/Opaque</name>
+          <name>Model/Skinned/Masked (Soft)</name>
           <arguments>
             <key class="java.lang.String">Coord Set</key>
             <value class="java.lang.Integer">0</value>
@@ -41,77 +42,67 @@
       </entry>
     </materialMappings>
     <source>model.mxml</source>
-    <root>
-      <name>%ROOT%</name>
-      <transform>
-      </transform>
-      <children>
-        <entry class="com.threerings.opengl.model.config.ArticulatedConfig$MeshNode">
-          <name>mesh</name>
-          <transform>
-          </transform>
-          <children>
-          </children>
-          <visible>
-            <texture>texture.png</texture>
-            <geometry class="com.threerings.opengl.geometry.config.GeometryConfig$IndexedStored">
-              <bounds>
-                <minExtent>{{ min_extent }}</minExtent>
-                <maxExtent>{{ max_extent }}</maxExtent>
-              </bounds>
-              <mode>{{ mode }}</mode>
-              <vertexAttribArrays>
-                <entry>
-                  <size>4</size>
-                  <type>FLOAT</type>
-                  <stride>64</stride>
-                  <floatArray id="1">{{ vertices }}</floatArray>
-                  <name>boneIndices</name>
-                </entry>
-                <entry>
-                  <size>4</size>
-                  <type>FLOAT</type>
-                  <stride>64</stride>
-                  <offset>16</offset>
-                  <floatArray ref="1"/>
-                  <name>boneWeights</name>
-                </entry>
-              </vertexAttribArrays>
-              <texCoordArrays>
-                <entry>
-                  <size>2</size>
-                  <type>FLOAT</type>
-                  <stride>64</stride>
-                  <offset>32</offset>
-                  <floatArray ref="1"/>
-                </entry>
-              </texCoordArrays>
-              <normalArray>
-                <size>3</size>
-                <type>FLOAT</type>
-                <stride>64</stride>
-                <offset>40</offset>
-                <floatArray ref="1"/>
-              </normalArray>
-              <vertexArray>
-                <size>3</size>
-                <type>FLOAT</type>
-                <stride>64</stride>
-                <offset>52</offset>
-                <floatArray ref="1"/>
-              </vertexArray>  
-              <end>{{ indices_end }}</end>
-              <indices>{{ indices }}</indices>
-              <bones>{{ bones }}</bones>
-            </geometry>
-          </visible>
-        </entry>
-      </children>
-    </root>
+		{{ bone_tree }}
     <skin>
       <bounds>
+        <minExtent>{{ min_extent }}</minExtent>
+        <maxExtent>{{ max_extent }}</maxExtent>
       </bounds>
       <visible>
+        <entry>
+          <texture>texture.png</texture>
+		      <tag>skinned</tag>
+          <geometry class="com.threerings.opengl.geometry.config.GeometryConfig$SkinnedIndexedStored">
+            <bounds>
+              <minExtent>{{ min_extent }}</minExtent>
+              <maxExtent>{{ max_extent }}</maxExtent>
+            </bounds>
+            <mode>{{ mode }}</mode>
+            <vertexAttribArrays>
+              <entry>
+                <size>4</size>
+                <type>FLOAT</type>
+                <stride>64</stride>
+                <floatArray id="1">{{ vertices }}</floatArray>
+                <name>boneIndices</name>
+              </entry>
+              <entry>
+                <size>4</size>
+                <type>FLOAT</type>
+                <stride>64</stride>
+                <offset>16</offset>
+                <floatArray ref="1"/>
+                <name>boneWeights</name>
+              </entry>
+            </vertexAttribArrays>
+            <texCoordArrays>
+              <entry>
+                <size>2</size>
+                <type>FLOAT</type>
+                <stride>64</stride>
+                <offset>32</offset>
+                <floatArray ref="1"/>
+              </entry>
+            </texCoordArrays>
+            <normalArray>
+              <size>3</size>
+              <type>FLOAT</type>
+              <stride>64</stride>
+              <offset>40</offset>
+              <floatArray ref="1"/>
+            </normalArray>
+            <vertexArray>
+              <size>3</size>
+              <type>FLOAT</type>
+              <stride>64</stride>
+              <offset>52</offset>
+              <floatArray ref="1"/>
+            </vertexArray>  
+            <end>{{ indices_end }}</end>
+            <indices>{{ indices }}</indices>
+            <bones>{{ bones }}</bones>
+          </geometry>
+        </entry>
       </visible>
     </skin>
   </implementation>
