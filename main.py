@@ -1,7 +1,5 @@
 # External Imports
-import re
 import gc
-import os
 import os.path
 
 # Internal Imports
@@ -10,14 +8,8 @@ from components.check_updates import CheckUpdates
 from components.check_updates import VERSION_CURRENT
 from components.restore_files import RestoreFiles
 from components.logger        import LoggerInit
-
-
-# Defining few necessary consts
-RESTORE_FLAIR = ('Unable to run. Please restore the '
-                 'files from Options!')
-SEPARATOR = ('---------------------------------'
-             '---------------------------------'
-             '--------------')
+from components.logger        import SEPARATOR
+from components.xml_write     import ExportXML
 
 
 # Retrieve a list of file types based on the modules.
@@ -65,44 +57,6 @@ def ProcessModules(file_name):
   else:
 
     raise Exception('Unrecognized file type!')
-
-
-# Export args data to the output file
-# Based on the selected template
-def ExportXML(file_name, template, args):
-
-  try:
-
-    # Trim out the extension and add an appropriate one
-    export_file = file_name.rsplit('.', 1)[0] + '.xml'
-
-    # In case a file with the same name exists
-    # patch up a new file name.
-    file_number = 1
-    
-    while os.path.isfile(export_file):
-      export_file = file_name.rsplit('.', 1)[0] + f'({file_number})' + '.xml'
-      file_number += 1
-
-    # Assure the output dir exists
-    with open(f'{export_file}', 'w+') as o, \
-         open(f'templates/{template}', 'r') as i:
-
-      # Write to output file using regex substitution
-      # Grabbed directly from Bootshuze
-      print(f'[MAIN][INFO]: Writing output with "{template}"...')    
-      regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
-
-      for line in i:
-
-        if any(f'{{ {arg} }}' in line for arg in args.keys()):
-          line = regex.sub(args[regex.search(line).group(1)], line)
-
-        o.write(line)
-    print(f'[MAIN][INFO]: Finished writing to "{o.name}"')
-
-  except FileNotFoundError:
-    print(f'[MAIN][ERROR]: Template files not found!\n{RESTORE_FLAIR}')
 
 
 def Main(file_names, template, no_export_file, strip_armature_tree):
