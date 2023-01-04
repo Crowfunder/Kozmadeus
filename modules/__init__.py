@@ -1,3 +1,9 @@
+###############################################################
+# by Crowfunder                                               #
+# Copyright my ass but also the License                       #
+# Github: https://github.com/Crowfunder                       #
+###############################################################
+
 # A workaround to get a dictionary of modules' names + objects. 
 #
 # Previous Source:  

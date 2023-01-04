@@ -1,3 +1,9 @@
+###############################################################
+# by Crowfunder                                               #
+# Copyright my ass but also the License                       #
+# Github: https://github.com/Crowfunder                       #
+###############################################################
+
 # External Imports
 import gc
 import os.path

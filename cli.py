@@ -1,3 +1,9 @@
+###############################################################
+# by Crowfunder                                               #
+# Copyright my ass but also the License                       #
+# Github: https://github.com/Crowfunder                       #
+###############################################################
+
 import os
 import sys
 import argparse

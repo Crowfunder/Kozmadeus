@@ -1,3 +1,11 @@
+###############################################################
+# by Crowfunder                                               #
+# Copyright my ass but also the License                       #
+# Github: https://github.com/Crowfunder                       #
+###############################################################
+# Credits to Puzovoz, mostly based on Bootshuze               #
+# https://github.com/Puzovoz/Bootshuze                        #
+###############################################################
 import re
 import os
 

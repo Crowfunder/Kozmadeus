@@ -1,3 +1,9 @@
+###############################################################
+# by Crowfunder                                               #
+# Copyright my ass but also the License                       #
+# Github: https://github.com/Crowfunder                       #
+###############################################################
+
 from webbrowser import open as OpenURL
 import PySimpleGUI as sg
 

@@ -1,3 +1,9 @@
+###############################################################
+# by Crowfunder                                               #
+# Copyright my ass but also the License                       #
+# Github: https://github.com/Crowfunder                       #
+###############################################################
+
 import re
 import os.path
 from os import remove as DeleteFile

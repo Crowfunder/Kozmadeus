@@ -1,6 +1,14 @@
-# Why a custom logger? Simply to prevent circular imports
-# The whole framework is designed according to one-way descending imports tree
-# In order to use "logging" module I'd have to make modules import logging functs
+###############################################################
+# by Crowfunder                                               #
+# Copyright my ass but also the License                       #
+# Github: https://github.com/Crowfunder                       #
+###############################################################
+# Why a custom logger? Simply to prevent circular imports     #
+# The whole framework is designed according to one-way        #
+# descending imports tree                                     #
+# In order to use "logging" module I'd have to                #
+# make modules import logging functs somehow                  #
+###############################################################
 
 import os
 import sys
