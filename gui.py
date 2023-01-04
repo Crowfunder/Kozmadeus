@@ -316,6 +316,7 @@ def GuiMenu():
       window['_STATUS_'].Update('Error!')
       window['_STATUS_'].Update(text_color='red')
       print('Unhandled exception has occured:\n', exception)
+      print('Refer to kozmadeus.log')
       print(SEPARATOR)
 
 

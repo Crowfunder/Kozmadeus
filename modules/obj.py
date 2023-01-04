@@ -23,9 +23,9 @@ def Extract(file_name):
         geometries = list()
         lines = file.readlines()
     
-        print('Reading input model file.')
-        print('Calculating indices...')
-        print('Calculating min/max extents...')
+        print('[MODULE][INFO]: Reading input model file.')
+        print('[MODULE][INFO]: Calculating indices...')
+        print('[MODULE][INFO]: Calculating min/max extents...')
         
         for line in lines:
             # Store faces that determine the numbers for indices
@@ -61,7 +61,7 @@ def Extract(file_name):
             raise Exception('Input model lacks UV mapping. '
                             'Model cannot be correctly created.')
             
-        print('Calculating vertices...')
+        print('[MODULE][INFO]: Calculating vertices...')
             
         # Generate vertices list based on indices from input file
         for face in faces:

@@ -26,16 +26,16 @@ def Extract(file_name):
         geometries     = list()
         mesh           = collada.Collada(file)
         
-        print('Reading input model file...')
+        print('[MODULE][INFO]: Reading input model file...')
         
         geometries_num = len(mesh.geometries)
         if geometries_num > 1:
-            print(f'Found {geometries_num} geometries!')
+            print(f'[MODULE][INFO]: Found {geometries_num} geometries!')
 
         # Iterate through all geometries
         for geometry in mesh.geometries:
             
-            print(f'Processing geometry: "{geometry.id}"')
+            print(f'[MODULE][INFO]: Processing geometry: "{geometry.id}"')
             
             # Initalize some vars
             args        = dict()
@@ -48,9 +48,9 @@ def Extract(file_name):
             args['max_extent'] = list()
 
             if len(geometry.primitives) > 1:
-                print('Found ', len(geometry.primitives),
+                print('[MODULE][INFO]: Found ', len(geometry.primitives),
                       ' primitives, will try to merge...')
-                print('Warning: Merging primitives may '
+                print('[MODULE][WARNING]: Merging primitives may '
                       'cause several issues, it is '
                       'recommended to merge them manually.')
 
@@ -97,8 +97,8 @@ def Extract(file_name):
                 if primitives.normal is not None:
                     if len(primitives.normal) != len(primitives.vertex):
                         
-                        print('Will triangulate geometries to fix '
-                            'missing normals, if necessary...')
+                        print('[MODULE][INFO]: Will triangulate geometries to fix '
+                              'missing normals, if necessary.')
                         flag_mode_convert = True
                         break
 
@@ -112,28 +112,28 @@ def Extract(file_name):
 
             # Get v, vn and vt, merge all primitives if multiple found
             indices_end = -1
-            print('Calculating indices...')
+            print('[MODULE][INFO]: Calculating indices...')
             for primitives in geometry.primitives:
 
                 # Warnings for unlikely, albeit possible cases
                 # that are not handled right now
                 if len(primitives.texcoordset) > 1:
-                    print('Warning: Unable to handle more than '
+                    print('[MODULE][WARNING]: Unable to handle more than '
                           'one set of UV mappings, falling back '
                           'to the first one found.')
 
                 if flag_mode_convert and type(primitives) is collada.lineset.LineSet:
-                    print('Warning: Unable to triangulate a LineSet, ' 
+                    print('[MODULE][WARNING]: Unable to triangulate a LineSet, ' 
                           'this set of primitives will be skipped.')
 
                 else:
 
                     if flag_mode_convert and type(primitives) is not collada.triangleset.TriangleSet:
-                        print('Triangulating geometries to merge...')
+                        print('[MODULE][INFO]: Triangulating geometries to merge...')
                         primitives = primitives.triangleset()
 
                     if len(primitives.normal) != len(primitives.vertex):
-                        print('Generating normals...')
+                        print('[MODULE][INFO]: Generating normals...')
                         primitives.generateNormals()
 
                     # Initalize temporary primitives
@@ -149,11 +149,11 @@ def Extract(file_name):
                     # If primitives don't follow the same indices
                     # as vertices, reorder them
                     if indices_vn != indices_v:
-                        print('Reordering normals to match vertex indices...')
+                        print('[MODULE][INFO]: Reordering normals to match vertex indices...')
                         vn = PrimitiveReorder(vn, indices_vn, indices_v)
                         
                     if indices_vt != indices_v:
-                        print('Reordering texcoords to match vertex indices...')
+                        print('[MODULE][INFO]: Reordering texcoords to match vertex indices...')
                         vt = PrimitiveReorder(vt, indices_vt, indices_v)
                         
                     # Append the finished vertices to final primitives
@@ -171,21 +171,21 @@ def Extract(file_name):
             # Determine the model mode
             if type(primitives) is collada.lineset.LineSet:
                 args['mode'] = 'LINES'
-                print('Warning: Experimental geometry mode: ', type(primitives),
-                      '\nThe results may be faulty.')
+                print('[MODULE][WARNING]: Experimental geometry mode: ', type(primitives),
+                      ' The results may be faulty.')
                 
             elif type(primitives) is collada.triangleset.TriangleSet:
                 args['mode'] = 'TRIANGLES'
                 
             elif type(primitives) is collada.polylist.Polygon:
                 args['mode'] = 'POLYGON'
-                print('Warning: Experimental geometry mode: ', type(primitives),
-                      '\nThe results may be faulty.')
+                print('[MODULE][WARNING]: Experimental geometry mode: ', type(primitives),
+                      ' The results may be faulty.')
                 
             elif type(primitives) is collada.polylist.Polylist:
                 args['mode'] = 'POLYGON'
-                print('Warning: Experimental Geometry Mode: ', type(primitives),
-                      '\nThe results may be faulty.')
+                print('[MODULE][WARNING]: Experimental Geometry Mode: ', type(primitives),
+                      ' The results may be faulty.')
 
             else:
                 raise Exception('Unrecognized geometry mode!'
@@ -215,7 +215,7 @@ def Extract(file_name):
                 for geom_ctrl in mesh.controllers:
                     if type(geom_ctrl) == collada.controller.Skin:
                         if geom_ctrl.geometry.id == geometry.id:
-                            print(f'Armature found! Processing: "{geom_ctrl.id}"')
+                            print(f'[MODULE][INFO]: Armature found! Processing: "{geom_ctrl.id}"')
 
                             # Extract bone names
                             for bone in geom_ctrl.weight_joints.data.tolist():
@@ -231,7 +231,7 @@ def Extract(file_name):
                                 if len(bone_vertex) > 4:
                                     zeros_num = 0
                                     bone_vertex = bone_vertex[0:4]
-                                    print('Warning: Unable to handle more than 4 bone '
+                                    print('[MODULE][WARNING]: Unable to handle more than 4 bone '
                                           'weights per vertex. Will cut the extra ones, '
                                           'but the armature may not work properly.')
                                    # raise Exception('Unable to handle more than 4 bone '
@@ -274,7 +274,7 @@ def Extract(file_name):
 
             # Extract vertices, normals and texcoords groups
             # to a single list
-            print('Calculating vertices, normals, texcoords...')
+            print('[MODULE][INFO]: Calculating vertices, normals, texcoords...')
 
             points  = list()
             for i in range(0, len(vertices_v)):
@@ -285,14 +285,14 @@ def Extract(file_name):
 
                     # Raise an exception if any primitive is empty
                     if len(primitive) == 0:
-                        raise Exception('Data missing in\n', primitive)
+                        raise Exception('Data missing in', primitive)
 
                     point += str(primitive[i])[1:-1] + ', '
 
                 points.append(point)
 
             # Calculate min/max extent for vertices
-            print('Calculating min/max extents...')
+            print('[MODULE][INFO]: Calculating min/max extents...')
             
             # Initialize values with first vertex
             # by creating a copy, not a reference
@@ -314,7 +314,7 @@ def Extract(file_name):
             del min_extent, max_extent
             del iterable_primitives
             
-            print('Creating vertices array...')
+            print('[MODULE][INFO]: Creating vertices array...')
             args['vertices'] = ''.join(points)[:-2]
             del points
             
@@ -382,7 +382,7 @@ def Extract(file_name):
                 # armature starting node by its name.
                 mode_order = ['controller', 'name']
                 armature_node_name = None
-                print('Extracting armature hierarchy...')
+                print('[MODULE][INFO]: Extracting armature hierarchy...')
 
                 for funct_mode in mode_order:
 
@@ -397,8 +397,8 @@ def Extract(file_name):
 
                     if not output_node:
                         args['bones'] = ''
-                        print('Warning: Unable to locate the armature '
-                              'starting joint node, file may be corrupted.\n'
+                        print('[MODULE][WARNING]: Unable to locate the armature '
+                              'starting joint node, file may be corrupted. '
                               'Armature will not be imported.')
                         break
 
@@ -504,14 +504,14 @@ def Extract(file_name):
 
 
                 if args['bones'] != '':
-                    print('Creating armature xml tree...')
+                    print('[MODULE][INFO]: Creating armature xml tree...')
                     ArmatureNodeToXML(armature_node)
                     args['bones'] = str(bones_list)[1:-1].replace("'", "")
                     args['bone_tree'] = ET.tostring(root_xml_node, encoding='unicode')
 
 
             geometries_num -= 1
-            print(f'Done! {geometries_num} remaining.')
+            print(f'[MODULE][INFO]: Done! {geometries_num} remaining.')
             gc.collect()
             geometries.append(args)
 

@@ -9,6 +9,7 @@ import modules
 from components.check_updates import CheckUpdates
 from components.check_updates import VERSION_CURRENT
 from components.restore_files import RestoreFiles
+from components.logger        import LoggerInit
 
 
 # Defining few necessary consts
@@ -59,7 +60,7 @@ def ProcessModules(file_name):
   if file_extension in modules.__modules__.keys():
 
     extract_module = modules.__modules__[file_extension]
-    return extract_module.Extract
+    return extract_module.Extract, extract_module.module_data
 
   else:
 
@@ -89,7 +90,7 @@ def ExportXML(file_name, template, args):
 
       # Write to output file using regex substitution
       # Grabbed directly from Bootshuze
-      print(f'Writing output with "{template}"...')    
+      print(f'[MAIN][INFO]: Writing output with "{template}"...')    
       regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
 
       for line in i:
@@ -98,49 +99,65 @@ def ExportXML(file_name, template, args):
           line = regex.sub(args[regex.search(line).group(1)], line)
 
         o.write(line)
-    print(f'Finished writing to "{o.name}"')
+    print(f'[MAIN][INFO]: Finished writing to "{o.name}"')
 
   except FileNotFoundError:
-    print(f'Error: Template files not found!\n{RESTORE_FLAIR}')
+    print(f'[MAIN][ERROR]: Template files not found!\n{RESTORE_FLAIR}')
 
 
 def Main(file_names, template, no_export_file, strip_armature_tree):
 
   if not modules.__modules__:
-    raise Exception(f'No modules found!\n{RESTORE_FLAIR}')
+    raise Exception(f'No modules found.')
+
+  # Initiate Logger
+  logger = LoggerInit()
 
   for file_name in file_names:
-  
-    print(fr'''Processing "{file_name}"...''')
-    Extract = ProcessModules(file_name)
-    geometries = Extract(file_name)
 
-    for args in geometries:
+    try:
+
+      print(fr'''[MAIN][INFO]: Processing: "{file_name}"...''')
       
-      # If the model has bones, swap the template
-      template_old = template
-      if args['bones'] != '':
-        template += '_bones'
+      Extract, module_data = ProcessModules(file_name)
+      print(f'''[MAIN][INFO]: Using "{module_data['Name']}" module.''')
+      geometries = Extract(file_name)
 
-        # Option necessary for importing armors.
-        # Erases "bones" tag to fix armor armature
-        # conflicting with pc model armature.
-        # Also, there needs to be just any value 
-        # in the tag, or SK xml parser will commit die
-        # instantly with little to no elaboration.
-        if strip_armature_tree:
-          print('Stripped armature tree data.')
-          args['bone_tree'] = ' '
-
-      if not no_export_file:
-        ExportXML(file_name, template, args)
+      for args in geometries:
         
-      # Restore the old template
-      template = template_old
-      
-    if no_export_file:
-      return geometries
+        # If the model has bones, swap the template
+        template_old = template
+        if args['bones'] != '':
+          template += '_bones'
 
-    del geometries
-    gc.collect()
-    print(SEPARATOR)
+          # Option necessary for importing armors.
+          # Erases "bones" tag to fix armor armature
+          # conflicting with pc model armature.
+          # Also, there needs to be just any value 
+          # in the tag, or SK xml parser will commit die
+          # instantly with little to no elaboration.
+          if strip_armature_tree:
+            print('[MAIN][INFO]: Stripped armature tree data.')
+            args['bone_tree'] = ' '
+
+        if not no_export_file:
+          ExportXML(file_name, template, args)
+          
+        # Restore the old template
+        template = template_old
+        
+      if no_export_file:
+        return geometries
+
+      del geometries
+      gc.collect()
+      print(SEPARATOR)
+
+    except Exception as e:
+      logger.log_exception()
+      logger.close()
+      raise
+    
+  # Putting it solely into "finally" won't work
+  # Simply because it executes before except
+  logger.close()
