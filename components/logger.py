@@ -1,6 +1,6 @@
 ###############################################################
 # by Crowfunder                                               #
-# Copyright my ass but also the License                       #
+# Copyright my ass but also the GPL-3.0 license License       #
 # Github: https://github.com/Crowfunder                       #
 ###############################################################
 # Why a custom logger? Simply to prevent circular imports     #
@@ -16,6 +16,7 @@ import platform
 import datetime
 import traceback
 
+# Constants
 SEPARATOR = ('---------------------------------'
              '---------------------------------'
              '--------------')
@@ -24,6 +25,7 @@ SEPARATOR = ('---------------------------------'
 # https://stackoverflow.com/questions/616645/how-to-duplicate-sys-stdout-to-a-log-file
 class Tee(object):
 
+
     def __init__(self, name, mode):
         self.file = open(name, mode)
         self.stdout = sys.stdout
@@ -31,6 +33,8 @@ class Tee(object):
         
         # Gotta notify the timestamper (get it?)
         # that there is a newline
+        # timestamps are added if a newline is detected
+        # as previous data
         self.data_old = '\n'
 
         # Init logging info
@@ -47,11 +51,12 @@ class Tee(object):
                            platform.processor()))
         self.file.write(f'System Info: {system_info} \n')
 
-        # Runtime
+        # Runtime Info
         self.file.write(f'Python version: {platform.python_version()} \n')
         self.file.write(f'{SEPARATOR}\n')
 
         self.file.flush()
+
 
     def close(self):
         if self.stdout is not None:
@@ -62,10 +67,11 @@ class Tee(object):
             self.file.close()
             self.file = None
 
+
     def write(self, data):
 
-        # Detect a newline from a stored previous line
-        # and add a timestamp
+        # Detect a newline from a stored previous 
+        # data write() input and add a timestamp
         if '\n' in self.data_old:
             self.timestamper()
 
@@ -75,28 +81,33 @@ class Tee(object):
         
         self.data_old = data
 
+
+    # Flush write buffer
     def flush(self):
         self.file.flush()
         self.stdout.flush()
 
+    # Log exceptions and format them
+    # using the timestamper and "traceback" module
     def log_exception(self):
         self.timestamper()
         tb = traceback.format_exc()
         self.file.write(f'[ERROR]: {tb}')
-        
+
+
+    # Adds a timestamp
     def timestamper(self):
         x = datetime.datetime.now()
         timestamp = x.strftime('%H:%M:%S')
         self.file.write(f'[{timestamp}]')
         self.file.flush()
 
+
     def __del__(self):
         self.close()
+
 
 
 def LoggerInit():
    logger = Tee('kozmadeus.log', 'w+')
    return logger
-   
-            
-    

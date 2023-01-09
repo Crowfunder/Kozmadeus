@@ -1,14 +1,16 @@
 ###############################################################
 # by Crowfunder                                               #
-# Copyright my ass but also the License                       #
+# Copyright my ass but also the GPL-3.0 license License       #
 # Github: https://github.com/Crowfunder                       #
 ###############################################################
 # Credits to Puzovoz, mostly based on Bootshuze               #
 # https://github.com/Puzovoz/Bootshuze                        #
 ###############################################################
+
 import re
 import os
 
+# Constants
 RESTORE_FLAIR = ('Unable to run. Please restore the '
                  'files from Options!')
 
@@ -29,7 +31,7 @@ def ExportXML(file_name, template, args):
       export_file = file_name.rsplit('.', 1)[0] + f'({file_number})' + '.xml'
       file_number += 1
 
-    # Assure the output dir exists
+    # Prepare to write to output file
     with open(f'{export_file}', 'w+') as o, \
          open(f'templates/{template}', 'r') as i:
 

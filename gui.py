@@ -1,20 +1,24 @@
 ###############################################################
 # by Crowfunder                                               #
-# Copyright my ass but also the License                       #
+# Copyright my ass but also the GPL-3.0 license License       #
 # Github: https://github.com/Crowfunder                       #
 ###############################################################
 
+# External Imports
 from webbrowser import open as OpenURL
 import PySimpleGUI as sg
 
+# Internal Imports
 from main import RestoreFiles, CheckUpdates, ModuleData, Main
 from main import VERSION_CURRENT, SEPARATOR, FILE_TYPES_LIST
+
 
 # Define a few constants
 URL_TWITTER = 'https://twitter.com/crowfunder'
 URL_GITHUB  = 'https://github.com/Crowfunder/Kozmadeus'
 URL_MANUAL  = 'https://github.com/Crowfunder/Kozmadeus/wiki'
 URL_BUGS    = 'https://github.com/Crowfunder/Kozmadeus/discussions/categories/bugs-issues'
+
 
 def WindowAbout():
   
@@ -80,6 +84,7 @@ def WindowAbout():
     
     elif event == '_URL-TWITTER_':
       OpenURL(URL_TWITTER)
+
 
 def GuiMenu():
 

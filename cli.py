@@ -1,15 +1,18 @@
 ###############################################################
 # by Crowfunder                                               #
-# Copyright my ass but also the License                       #
+# Copyright my ass but also the GPL-3.0 license License       #
 # Github: https://github.com/Crowfunder                       #
 ###############################################################
 
+# External Imports
 import os
 import sys
 import argparse
 
+# Internal Imports
 from main import RestoreFiles, CheckUpdates, ModuleData, Main
 from main import VERSION_CURRENT, SEPARATOR
+
 
 # Class for disabling the output log
 # strictly for --silent option
@@ -59,7 +62,7 @@ def CliMenu():
                                                 'Spiral Knights XML.'),
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    epilog=('Script written with love by Crowfunder\n'
-                                           f'Version: {VERSION_CURRENT}\n'
+                                          f'Version: {VERSION_CURRENT}\n'
                                            'Credits: Puzovoz, XanTheDragon, '
                                            'Kirbeh \nGithub: '
                                            'https://github.com/Crowfunder/Kozmadeus'))

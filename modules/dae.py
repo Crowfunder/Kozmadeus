@@ -1,6 +1,6 @@
 ###############################################################
 # by Crowfunder                                               #
-# Copyright my ass but also the License                       #
+# Copyright my ass but also the GPL-3.0 license License       #
 # Github: https://github.com/Crowfunder                       #
 ###############################################################
 
@@ -8,6 +8,8 @@ import gc
 import re
 import collada
 import xml.etree.ElementTree as ET
+
+
 
 module_data = {
     'Name'       : 'Collada',
@@ -18,6 +20,7 @@ module_data = {
 }
 
 
+
 # Function for list flattening, regardless of depth.
 def ListFlatten(input_list):
 
@@ -25,6 +28,7 @@ def ListFlatten(input_list):
         input_list = [item for sublist in input_list for item in sublist]
 
     return input_list
+
 
 
 def Extract(file_name):

@@ -1,6 +1,6 @@
 ###############################################################
 # by Crowfunder                                               #
-# Copyright my ass but also the License                       #
+# Copyright my ass but also the GPL-3.0 license License       #
 # Github: https://github.com/Crowfunder                       #
 ###############################################################
 
@@ -18,6 +18,8 @@ VERSION_URL = 'https://raw.githubusercontent.com/Crowfunder/Kozmadeus/main/VERSI
 
 # Function that checks github for updates
 # Returns version fetched from github as string
+# If the fetched version is not equal 
+# to VERSION_CURRENT constant, assume updates are there
 def CheckUpdates():
   
   if os.path.isfile(VERSION_FILENAME):
