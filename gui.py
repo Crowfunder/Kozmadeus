@@ -14,10 +14,10 @@ from main import VERSION_CURRENT, SEPARATOR, FILE_TYPES_LIST
 
 
 # Define a few constants
-URL_TWITTER = 'https://twitter.com/crowfunder'
+URL_DISCORD = 'https://discord.gg/RAf499a'
 URL_GITHUB  = 'https://github.com/Crowfunder/Kozmadeus'
 URL_MANUAL  = 'https://github.com/Crowfunder/Kozmadeus/wiki'
-URL_BUGS    = 'https://github.com/Crowfunder/Kozmadeus/discussions/categories/bugs-issues'
+URL_BUGS    = 'https://github.com/Crowfunder/Kozmadeus/issues'
 
 
 def WindowAbout():
@@ -63,7 +63,7 @@ def WindowAbout():
               [
                 sg.Button('Kozmadeus\n Github', size=(16,2), key='_URL-GITHUB_'),
                 sg.Push(),
-                sg.Button('Follow me\n on Twitter', size=(16,2), key='_URL-TWITTER_')
+                sg.Button('Chat on\n Discord', size=(16,2), key='_URL-DISCORD_')
               ]
            ]
   
@@ -82,8 +82,8 @@ def WindowAbout():
     elif event == '_URL-GITHUB_':
       OpenURL(URL_GITHUB)
     
-    elif event == '_URL-TWITTER_':
-      OpenURL(URL_TWITTER)
+    elif event == '_URL-DISCORD_':
+      OpenURL(URL_DISCORD)
 
 
 def GuiMenu():
