@@ -230,10 +230,6 @@ def GuiMenu():
   while True:
     try:
       
-      # Refresh the buttons when the loop cycle is done
-      window['Submit'].Update(disabled=False)
-      window.bind('<Return>', 'Submit')
-      
       event, values = window.Read()
       
       # Program exit event
@@ -297,6 +293,17 @@ def GuiMenu():
       elif event in (menubar_clear_c, 'Ctrl-R', 'Clear Console'):
         window['_OUTPUT_'].Update('')
       
+      elif event == '-FUNCTION COMPLETED-':
+        # Refresh the buttons when the loop cycle is done
+        window['Submit'].Update(disabled=False)
+        window.bind('<Return>', 'Submit')
+        
+        # Refresh the status
+        window['_STATUS_'].Update('Done!')
+        window['_STATUS_'].Update(text_color='lawn green')
+        window.ding()
+
+
       elif event == 'Submit':
         window['_STATUS_'].Update('')
         
@@ -314,10 +321,12 @@ def GuiMenu():
 
         # Start processing the files
         if file_names:
-          Main(file_names, template, False, strip_armature_tree)
-          window['_STATUS_'].Update('Done!')
-          window['_STATUS_'].Update(text_color='lawn green')
-          window.ding()
+          
+          # Long boi taken directly from PySimpleGUI Cookbook
+          # Creates a separate thread to prevent the program from freezing
+          window.perform_long_operation(lambda: Main(file_names, template, 
+                                                     False, strip_armature_tree), 
+                                        '-FUNCTION COMPLETED-')
 
         else:
           print('Please select a file!')
