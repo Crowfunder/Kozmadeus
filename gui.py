@@ -225,6 +225,10 @@ def GuiMenu():
   
   # Bring window to front on start
   window.bring_to_front()
+  
+  # Lock certain options when processing files to prevent 
+  # absolute buffons from breaking the script
+  processing_lock = False
 
   # Main events and values loop
   while True:
@@ -265,19 +269,22 @@ def GuiMenu():
 
       # Menubar remaining events
       elif event == 'Modules':
-        ModuleData()
-        print(SEPARATOR)
+        if not processing_lock:
+          ModuleData()
+          print(SEPARATOR)
 
       elif event == 'Restore Files':
-        RestoreFiles()
-        print(SEPARATOR)
+        if not processing_lock:
+          RestoreFiles()
+          print(SEPARATOR)
 
       elif event == 'Check for Updates':
-        CheckUpdates()
-        print(SEPARATOR)
+        if not processing_lock:
+          CheckUpdates()
+          print(SEPARATOR)
 
       elif event == 'Manual':
-        OpenURL(URL_MANUAL)
+        window.perform_long_operation(lambda: OpenURL(URL_MANUAL), '')
 
       elif event == 'About':
         window.disable()
@@ -286,7 +293,7 @@ def GuiMenu():
         window.bring_to_front()
         
       elif event == 'Report a Bug':
-        OpenURL(URL_BUGS)
+        window.perform_long_operation(lambda: OpenURL(URL_BUGS), '')
 
 
       # Button related events and others
@@ -294,9 +301,11 @@ def GuiMenu():
         window['_OUTPUT_'].Update('')
       
       elif event == '-FUNCTION COMPLETED-':
-        # Refresh the buttons when the loop cycle is done
+        # Refresh the buttons and locks 
+        # when the loop cycle is done
         window['Submit'].Update(disabled=False)
         window.bind('<Return>', 'Submit')
+        processing_lock = False
         
         # Refresh the status
         window['_STATUS_'].Update('Done!')
@@ -306,10 +315,6 @@ def GuiMenu():
 
       elif event == 'Submit':
         window['_STATUS_'].Update('')
-        
-        # Lock the "Submit" button
-        window['Submit'].Update(disabled=True)
-        window.bind('<Return>', 'null')
               
         # Get the user settings
         if window['_ARTICULATED-MODE_'].Get():
@@ -321,6 +326,11 @@ def GuiMenu():
 
         # Start processing the files
         if file_names:
+          
+          # Lock the "Submit" button and certain functions
+          window['Submit'].Update(disabled=True)
+          window.bind('<Return>', 'null')
+          processing_lock = True
           
           # Long boi taken directly from PySimpleGUI Cookbook
           # Creates a separate thread to prevent the program from freezing
