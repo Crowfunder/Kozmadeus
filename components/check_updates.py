@@ -11,7 +11,7 @@ from wget import download as DownloadFile
 
 
 # Constants
-VERSION_CURRENT = 'v0.0.1dev'
+VERSION_CURRENT = 'v0.0.1beta'
 VERSION_FILENAME = 'VERSION'
 VERSION_URL = 'https://raw.githubusercontent.com/Crowfunder/Kozmadeus/main/VERSION'
 
