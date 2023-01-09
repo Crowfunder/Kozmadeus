@@ -58,6 +58,8 @@ def Extract(file_name):
                 for index, vertex in enumerate(line.split()[1:]):
                     min_extent[index] = min(min_extent[index], float(vertex))
                     max_extent[index] = max(max_extent[index], float(vertex))
+        
+        print('[MODULE][INFO]: Geometry mode: ', args['mode'])
             
         vt = list(filter(lambda x: x[:2] == 'vt', lines))
         vn = list(filter(lambda x: x[:2] == 'vn', lines))

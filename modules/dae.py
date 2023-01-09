@@ -186,6 +186,7 @@ def Extract(file_name):
                 
             elif type(primitives) is collada.triangleset.TriangleSet:
                 args['mode'] = 'TRIANGLES'
+                print('[MODULE][INFO]: Geometry mode: ', type(primitives))
                 
             elif type(primitives) is collada.polylist.Polygon:
                 args['mode'] = 'POLYGON'
