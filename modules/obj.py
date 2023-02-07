@@ -14,6 +14,7 @@ import gc
 
 module_data = {
     'Name'       : 'Wavefront',
+    'Author'     : 'Crowfunder',
     'Mesh'       : True,
     'Armature'   : False,
     'Animations' : False,

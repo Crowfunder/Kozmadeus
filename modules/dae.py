@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 
 module_data = {
     'Name'       : 'Collada',
+    'Author'     : 'Crowfunder',
     'Mesh'       : True,
     'Armature'   : True,
     'Animations' : False,
