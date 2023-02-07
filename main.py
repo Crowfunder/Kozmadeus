@@ -107,6 +107,8 @@ def Main(file_names, template, no_export_file, strip_armature_tree):
         template = template_old
         
       if no_export_file:
+        # Close the logger so it doesn't log the file contents!
+        logger.close()
         return geometries
 
       del geometries
