@@ -482,6 +482,7 @@ def Extract(file_name):
 
                     # Handle bone transforms
                     xml_trfm_node = ET.SubElement(xml_entr_node, 'transform')
+                    xml_trfm_node.text = ' '
 
                     # There shouldn't be more than a single transform
                     # but better safe than sorry
