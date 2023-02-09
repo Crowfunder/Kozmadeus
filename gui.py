@@ -7,6 +7,7 @@
 # External Imports
 from webbrowser import open as OpenURL
 import PySimpleGUI as sg
+import threading
 
 # Internal Imports
 from main import RestoreFiles, CheckUpdates, ModuleData, Main
@@ -225,16 +226,34 @@ def GuiMenu():
   
   # Bring window to front on start
   window.bring_to_front()
-  
+
+  # Create an Exception Hook for threads
+  def ThreadExceptHook(data):
+    nonlocal window
+    window.write_event_value('_THREAD-ERROR_', data.exc_value)
+  threading.excepthook = ThreadExceptHook
+
   # Lock certain options when processing files to prevent 
   # absolute buffons from breaking the script
   processing_lock = False
 
+  # Refresh the buttons and locks 
+  # when the loop cycle is done
+  def RefreshWindowButtons():
+    nonlocal window
+    nonlocal processing_lock
+    window['Submit'].Update(disabled=False)
+    window.bind('<Return>', 'Submit')
+    processing_lock = False
+    window.ding()
+
+
   # Main events and values loop
   while True:
     try:
-      
+
       event, values = window.Read()
+      window.refresh()
       
       # Program exit event
       if event is None:
@@ -295,23 +314,20 @@ def GuiMenu():
       elif event == 'Report a Bug':
         window.perform_long_operation(lambda: OpenURL(URL_BUGS), '')
 
+      
+      # Thread Events
+      elif event == '_THREAD-ERROR_':
+        raise Exception(values['_THREAD-ERROR_'])
+      
+      elif event == '_MAIN-COMPLETE_':
+        window['_STATUS_'].Update('Done!')
+        window['_STATUS_'].Update(text_color='lawn green')
+        RefreshWindowButtons()
+
 
       # Button related events and others
       elif event in (menubar_clear_c, 'Ctrl-R', 'Clear Console'):
         window['_OUTPUT_'].Update('')
-      
-      elif event == '-FUNCTION COMPLETED-':
-        # Refresh the buttons and locks 
-        # when the loop cycle is done
-        window['Submit'].Update(disabled=False)
-        window.bind('<Return>', 'Submit')
-        processing_lock = False
-        
-        # Refresh the status
-        window['_STATUS_'].Update('Done!')
-        window['_STATUS_'].Update(text_color='lawn green')
-        window.ding()
-
 
       elif event == 'Submit':
         window['_STATUS_'].Update('')
@@ -331,12 +347,12 @@ def GuiMenu():
           window['Submit'].Update(disabled=True)
           window.bind('<Return>', 'null')
           processing_lock = True
-          
+
           # Long boi taken directly from PySimpleGUI Cookbook
           # Creates a separate thread to prevent the program from freezing
           window.perform_long_operation(lambda: Main(file_names, template, 
                                                      False, strip_armature_tree), 
-                                        '-FUNCTION COMPLETED-')
+                                        '_MAIN-COMPLETE_')
 
         else:
           print('Please select a file!')
@@ -345,9 +361,12 @@ def GuiMenu():
     except Exception as exception:
       window['_STATUS_'].Update('Error!')
       window['_STATUS_'].Update(text_color='red')
+
       print('Unhandled exception has occured:\n', exception)
       print('Refer to kozmadeus.log')
       print(SEPARATOR)
+
+      RefreshWindowButtons()
 
 
 if __name__ == '__main__':
