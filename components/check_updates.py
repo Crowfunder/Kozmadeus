@@ -41,7 +41,7 @@ def CheckUpdates():
       print('Updates available! \nDownload at: '
             'https://github.com/Crowfunder/Kozmadeus/releases\n')
     
-  except Exception as exception:
+  except:
     print('Warning: Unable to fetch updates!\n'
           'Check your internet connection.')
-    print(exception)
+    raise

@@ -8,6 +8,9 @@
 # descending imports tree                                     #
 # In order to use "logging" module I'd have to                #
 # make modules import logging functs somehow                  #
+# I'm not proud of this implementation, but it's better       #
+# than nothing at the moment, I need a quick implementation   #
+# allowing verbose output and tracebacks logging.             #
 ###############################################################
 
 import os
@@ -58,11 +61,12 @@ class Tee(object):
         self.file.flush()
 
 
-    def close(self):
+    def close(self):  
+
         if self.stdout is not None:
             sys.stdout = self.stdout
             self.stdout = None
-
+        
         if self.file is not None:
             self.file.close()
             self.file = None
@@ -108,6 +112,6 @@ class Tee(object):
 
 
 
-def LoggerInit():
-   logger = Tee('kozmadeus.log', 'w+')
+def LoggerInit(filename):
+   logger = Tee(filename, 'w+')
    return logger

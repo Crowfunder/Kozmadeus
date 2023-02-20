@@ -29,7 +29,7 @@ def RestoreFiles():
       zip_file.extractall()
       print('Success! Files restored.')
 
-  except Exception as exception:
+  except:
     print('Error: Unable to download!\n'
           'Check your internet connection.')
-    print(exception)
+    raise

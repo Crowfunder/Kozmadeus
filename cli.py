@@ -106,7 +106,10 @@ def CliMenu():
       
     # Check for updates
     if not parser_args.skip_update:
-      CheckUpdates()
+      try:
+        CheckUpdates()
+      except Exception as e:
+        print(e)
       print(SEPARATOR)
 
     template = 'template_' + parser_args.type

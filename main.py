@@ -71,7 +71,17 @@ def Main(file_names, template, no_export_file, strip_armature_tree):
     raise Exception(f'No modules found.')
 
   # Initiate Logger
-  logger = LoggerInit()
+  logger_filename = 'kozmadeus.log'
+  logger = LoggerInit(logger_filename)
+  print(f'''[MAIN][INFO]: Kozmadeus version: "{VERSION_CURRENT}"''')
+  
+  def LoggerCloser():
+    nonlocal logger
+    nonlocal logger_filename
+    logger.close()
+    print(f'Finished logging to "{logger_filename}"')
+    print(SEPARATOR)
+    
 
   for file_name in file_names:
 
@@ -108,18 +118,18 @@ def Main(file_names, template, no_export_file, strip_armature_tree):
         
       if no_export_file:
         # Close the logger so it doesn't log the file contents!
-        logger.close()
+        LoggerCloser()
         return geometries
 
       del geometries
       gc.collect()
       print(SEPARATOR)
 
-    except Exception as e:
+    except:
       logger.log_exception()
-      logger.close()
+      LoggerCloser()
       raise
     
   # Putting it solely into "finally" won't work
   # Simply because it executes before except
-  logger.close()
+  LoggerCloser()
