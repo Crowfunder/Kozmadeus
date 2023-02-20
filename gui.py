@@ -289,21 +289,25 @@ def GuiMenu():
       # Menubar remaining events
       elif event == 'Modules':
         if not processing_lock:
+          processing_lock = True
           ModuleData()
+          processing_lock = False
           print(SEPARATOR)
 
       elif event == 'Restore Files':
         if not processing_lock:
-          RestoreFiles()
+          processing_lock = True
+          window.start_thread(RestoreFiles(), '_THREAD-COMPLETE_')
           print(SEPARATOR)
 
       elif event == 'Check for Updates':
         if not processing_lock:
-          CheckUpdates()
+          processing_lock = True
+          window.start_thread(CheckUpdates(), '_THREAD-COMPLETE_')
           print(SEPARATOR)
 
       elif event == 'Manual':
-        window.perform_long_operation(lambda: OpenURL(URL_MANUAL), '')
+        OpenURL(URL_MANUAL)
 
       elif event == 'About':
         window.disable()
@@ -312,14 +316,14 @@ def GuiMenu():
         window.bring_to_front()
         
       elif event == 'Report a Bug':
-        window.perform_long_operation(lambda: OpenURL(URL_BUGS), '')
+        OpenURL(URL_BUGS)
 
       
       # Thread Events
       elif event == '_THREAD-ERROR_':
         raise Exception(values['_THREAD-ERROR_'])
       
-      elif event == '_MAIN-COMPLETE_':
+      elif event == '_THREAD-COMPLETE_':
         window['_STATUS_'].Update('Done!')
         window['_STATUS_'].Update(text_color='lawn green')
         RefreshWindowButtons()
@@ -329,6 +333,7 @@ def GuiMenu():
       elif event in (menubar_clear_c, 'Ctrl-R', 'Clear Console'):
         window['_OUTPUT_'].Update('')
 
+      ### BEGIN SUBMIT
       elif event == 'Submit':
         window['_STATUS_'].Update('')
               
@@ -350,22 +355,20 @@ def GuiMenu():
 
           # Long boi taken directly from PySimpleGUI Cookbook
           # Creates a separate thread to prevent the program from freezing
-          window.perform_long_operation(lambda: Main(file_names, template, 
-                                                     False, strip_armature_tree), 
-                                        '_MAIN-COMPLETE_')
+          window.start_thread(lambda: Main(file_names, template, 
+                                           False, strip_armature_tree), 
+                              '_THREAD-COMPLETE_')
 
         else:
           print('Please select a file!')
-        
-              
+      ### END SUBMIT  
+
     except Exception as exception:
       window['_STATUS_'].Update('Error!')
       window['_STATUS_'].Update(text_color='red')
 
       print('Unhandled exception has occured:\n', exception)
-      print('Refer to kozmadeus.log')
       print(SEPARATOR)
-
       RefreshWindowButtons()
 
 
