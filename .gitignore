@@ -1,12 +1,8 @@
-dist/
-build/
 __pycache__/
 build.bat
 Kozmadeus.spec
 venv/
 .vscode/
-main.dist/
-main.build/
-gui.dist/
-gui.build/
+*.dist/
+*.build/
 kozmadeus.log
