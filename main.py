@@ -92,6 +92,7 @@ def Main(file_names, template, no_export_file, strip_armature_tree):
       Extract, module_data = ProcessModules(file_name)
       print(f'''[MAIN][INFO]: Using "{module_data['Name']}" module.''')
       geometries = Extract(file_name)
+      print('[MAIN][INFO]: Finished extracting the model data.')
 
       for args in geometries:
         
