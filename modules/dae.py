@@ -38,10 +38,17 @@ def Extract(file_name):
         mesh           = collada.Collada(file)
         
         print('[MODULE][INFO]: Reading input model file...')
-        
+
+        if any(geometry.primitives == [] for geometry in mesh.geometries):
+            print('[MODULE][INFO]: Removing empty geometries...')
+            mesh.geometries = filter(lambda geometry: geometry.primitives != [], mesh.geometries)
+            
         geometries_num = len(mesh.geometries)
-        if geometries_num > 1:
-            print(f'[MODULE][INFO]: Found {geometries_num} geometries!')
+        if geometries_num >= 1:
+            print(f'[MODULE][INFO]: Found {geometries_num} valid geometries!')
+        elif geometries < 1:
+            raise Exception('Missing model geometry')
+            
 
         # Iterate through all geometries
         for geometry in mesh.geometries:
@@ -64,6 +71,7 @@ def Extract(file_name):
                 print('[MODULE][WARNING]: Merging primitives may '
                       'cause several issues, it is '
                       'recommended to merge them manually.')
+                
 
 
 
@@ -213,10 +221,22 @@ def Extract(file_name):
             # Controllers Library Section
             #
             # - Extract bone indices, weights and names
+            # - Limit the bone weights to 4 per vertex
+            #   and normalize them
             # - Fetch the controller to be used by armature
             #   hierarchy later on.
             #
             ################################################          
+
+
+            # Thanks the algorithm Xan
+            def WeightNormalize(weights):
+                output_weights = list()
+
+                for weight in weights:
+                    output_weights.append( weight/sum(weights) )
+
+                return output_weights
 
 
             # Extract armature data from existing controllers
@@ -227,7 +247,7 @@ def Extract(file_name):
                 for geom_ctrl in mesh.controllers:
                     if type(geom_ctrl) == collada.controller.Skin:
                         if geom_ctrl.geometry.id == geometry.id:
-                            print(f'[MODULE][INFO]: Armature found! Processing: "{geom_ctrl.id}"')
+                            print(f'[MODULE][INFO]: Armature found! Processing: "{geom_ctrl.id}"...')
 
                             # Extract bone names
                             for bone in geom_ctrl.weight_joints.data.tolist():
@@ -236,18 +256,10 @@ def Extract(file_name):
                             
                             # Extract bone indices and weights
                             bone_slots = list()
+                            bone_weight_warn = False
                             for bone_vertex in geom_ctrl.index:
                                 bone_indices = list()
                                 bone_weights = list()
-                                zeros_num = 4 - len(bone_vertex)
-                                if len(bone_vertex) > 4:
-                                    zeros_num = 0
-                                    bone_vertex = bone_vertex[0:4]
-                                    print('[MODULE][WARNING]: Unable to handle more than 4 bone '
-                                          'weights per vertex. Will cut the extra ones, '
-                                          'but the armature may not work properly.')
-                                   # raise Exception('Unable to handle more than 4 bone '
-                                   #                 'weights per vertex.')
 
                                 # Extract bone weights and indices for single vertex
                                 for bone_index, weight_index in bone_vertex.tolist():
@@ -256,14 +268,35 @@ def Extract(file_name):
                                     for weight in geom_ctrl.weights.data.tolist()[weight_index]:
                                         bone_weights.append(float(weight))
 
+                                if len(bone_weights) > 4:
+
+                                    # Remove len(bone_vertex)-4 smallest bone weights
+                                    extra_args = len(bone_vertex) - 4
+                                    for weight in sorted(bone_weights)[:extra_args]:
+                                        index = bone_weights.index(weight)
+                                        del bone_weights[index]
+                                        del bone_indices[index]
+                                        
+                                    # Bone weights need to be normalized, so that they add up to 1
+                                    bone_weights = WeightNormalize(bone_weights) 
+
+                                    if not bone_weight_warn:
+                                        bone_weight_warn = True
+                                        print('[MODULE][WARNING]: Unable to handle more than 4 bone '
+                                              'weights per vertex. Will cut the extra ones, '
+                                              'but the armature may not work properly. '
+                                              'Refer to the documentation.')
+
                                 # Fill out the remaining bone slots with 0.0
+                                zeros_num = 4 - len(bone_weights)
                                 for i in range(0, zeros_num):
                                     bone_indices.append(0.0)
                                     bone_weights.append(0.0)
 
                                 bone = bone_indices + bone_weights
                                 bone_slots.append(bone)
-                                
+                            
+                            # No need to look for more controllers 
                             break
 
 
