@@ -20,6 +20,13 @@ VERSION_URL = 'https://raw.githubusercontent.com/Crowfunder/Kozmadeus/main/VERSI
 # version as string, the rest of the logic is to be handled by UI
 def CheckUpdates():
 
+  # Special file handle for disabling update check
+  if os.path.isfile('UPDATER_DISABLE'):
+    output_version = dict()
+    output_version['current'] = VERSION_CURRENT
+    output_version['fetched'] = VERSION_CURRENT
+    return output_version
+
   # Delete leftover VERSION file if there is any
   if os.path.isfile(VERSION_FILENAME):
     DeleteFile(VERSION_FILENAME)
