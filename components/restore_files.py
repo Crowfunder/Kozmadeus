@@ -19,17 +19,8 @@ RESTORE_FILENAME = 'restore.zip'
 # Download from github and unzip
 def RestoreFiles():
     
-  try:
-    if not os.path.isfile(RESTORE_FILENAME):
-      print('Downloading files...')
-      DownloadFile(RESTORE_URL)
-      
-    print('Unpacking...')
-    with ZipFile(RESTORE_FILENAME, 'r') as zip_file:
-      zip_file.extractall()
-      print('Success! Files restored.')
+  if not os.path.isfile(RESTORE_FILENAME):
+    DownloadFile(RESTORE_URL, out=RESTORE_FILENAME)
 
-  except:
-    print('Error: Unable to download!\n'
-          'Check your internet connection.')
-    raise
+  with ZipFile(RESTORE_FILENAME, 'r') as zip_file:
+    zip_file.extractall()

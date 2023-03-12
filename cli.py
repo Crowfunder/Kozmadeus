@@ -126,7 +126,9 @@ def CliMenu():
     # Make use of argparse args
     # Restore files
     if parser_args.restore_files:
+      print('Restoring template files...')
       RestoreFiles()
+      print('Success!')
       print(SEPARATOR)
       
     # Check for updates

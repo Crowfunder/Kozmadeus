@@ -328,7 +328,9 @@ def GuiMenu():
       elif event == 'Restore Files':
         if not processing_lock:
           processing_lock = True
-          window.start_thread(RestoreFiles(), '_THREAD-COMPLETE_')
+          print('Restoring template files...')
+          RestoreFiles()
+          print('Success!')
           print(SEPARATOR)
 
       elif event == 'Check for Updates':
