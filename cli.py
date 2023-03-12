@@ -87,6 +87,7 @@ def CliMenu():
                                                 'Spiral Knights XML.'),
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    epilog=('Script written with love by Crowfunder\n'
+                                           'Distributed under GPL-3.0 License\n'
                                           f'Version: {VERSION_CURRENT}\n'
                                            'Credits: Puzovoz, XanTheDragon, '
                                            'Kirbeh \nGithub: '

@@ -33,19 +33,21 @@ def WindowUpdates(noupdate_silent):
                'https://github.com/Crowfunder/Kozmadeus/releases\n\n'
               f'Current version: {update_data["current"]}\n'
               f'New version: {update_data["fetched"]}',
-              icon='assets/kozmadeus.ico', title='Updates Found')
-      
+              icon='assets/kozmadeus.ico', title='Updates Found',
+              font=('Helvetica', 11))
+
     else:
       if not noupdate_silent:
         sg.Popup('Kozmadeus is up to date!', icon='assets/kozmadeus.ico',
-                 title='Up to date')
+                 title='Up to date', font=('Helvetica', 11))
       
-    
+
   except Exception as e:
     if not noupdate_silent:
       sg.PopupError('Unable to fetch updates!\n'
                     'Check your internet connection.\n', e,
-                    icon='assets/kozmadeus.ico', title='Error')
+                    icon='assets/kozmadeus.ico', title='Error',
+                    font=('Helvetica', 11))
   
   
 
@@ -76,7 +78,8 @@ def WindowAbout():
                    ],
                    [
                       sg.Push(),
-                      sg.Text('Script written with love, by Crowfunder',
+                      sg.Text('Script written with love, by Crowfunder\n'
+                              'Distributed under GPL-3.0 License',
                               font=('Helvetica', 11)),
                       sg.Push(),
                       sg.VPush()
