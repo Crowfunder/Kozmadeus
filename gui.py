@@ -21,6 +21,35 @@ URL_MANUAL  = 'https://github.com/Crowfunder/Kozmadeus/wiki'
 URL_BUGS    = 'https://github.com/Crowfunder/Kozmadeus/issues'
 
 
+# noupdate_silent is a flag that disables
+# error and "no updates available" popups
+def WindowUpdates(noupdate_silent):
+
+  try:
+    update_data = CheckUpdates()
+    
+    if update_data['current'] != update_data['fetched']:
+      sg.Popup('Updates available! \nDownload at: '
+               'https://github.com/Crowfunder/Kozmadeus/releases\n\n'
+              f'Current version: {update_data["current"]}\n'
+              f'New version: {update_data["fetched"]}',
+              icon='assets/kozmadeus.ico', title='Updates Found')
+      
+    else:
+      if not noupdate_silent:
+        sg.Popup('Kozmadeus is up to date!', icon='assets/kozmadeus.ico',
+                 title='Up to date')
+      
+    
+  except Exception as e:
+    if not noupdate_silent:
+      sg.PopupError('Unable to fetch updates!\n'
+                    'Check your internet connection.\n', e,
+                    icon='assets/kozmadeus.ico', title='Error')
+  
+  
+
+
 def WindowAbout():
   
   layout_credits = [
@@ -72,7 +101,7 @@ def WindowAbout():
                            icon='assets/kozmadeus.ico', finalize=True)
   window_about.bind('<Escape>', 'Exit')
   window_about.bring_to_front()
-  
+
   while True:
     event, values = window_about.Read()
     
@@ -97,7 +126,7 @@ def GuiMenu():
   
   # Predefining file_names as empty list 
   # Necessary to make Listbox work
-  file_names = []
+  file_names = list()
   
   # Set the PySimpleGUI Theme
   sg.theme('DarkGrey')
@@ -246,7 +275,9 @@ def GuiMenu():
     window.bind('<Return>', 'Submit')
     processing_lock = False
     window.ding()
-
+    
+  # Check for updates with noupdate_silent flag
+  WindowUpdates(True)
 
   # Main events and values loop
   while True:
@@ -301,10 +332,7 @@ def GuiMenu():
           print(SEPARATOR)
 
       elif event == 'Check for Updates':
-        if not processing_lock:
-          processing_lock = True
-          window.start_thread(CheckUpdates(), '_THREAD-COMPLETE_')
-          print(SEPARATOR)
+        WindowUpdates(False)
 
       elif event == 'Manual':
         OpenURL(URL_MANUAL)

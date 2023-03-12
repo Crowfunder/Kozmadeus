@@ -51,6 +51,31 @@ class modules_action(argparse.Action):
         ModuleData()
         parser.exit()
 
+
+# noupdate_silent is a flag that disables
+# error and "no updates available" messages
+def PrintUpdates(noupdate_silent):
+
+  try:
+    update_data = CheckUpdates()
+    
+    if update_data['current'] != update_data['fetched']:
+      print('Updates available! \nDownload at: '
+            'https://github.com/Crowfunder/Kozmadeus/releases\n'
+           f'Current version: {update_data["current"]}\n'
+           f'New version: {update_data["fetched"]}')
+      
+    else:
+      if not noupdate_silent:
+        print('Kozmadeus is up to date!')
+
+  except Exception as e:
+    if not noupdate_silent:
+      print('Unable to fetch updates! '
+            'Check your internet connection.\n', e)
+  
+
+
 # Command Line Interface, invoked if main is invoked 
 # instead of gui.
 def CliMenu():
@@ -106,10 +131,7 @@ def CliMenu():
       
     # Check for updates
     if not parser_args.skip_update:
-      try:
-        CheckUpdates()
-      except Exception as e:
-        print(e)
+      PrintUpdates(False)
       print(SEPARATOR)
 
     template = 'template_' + parser_args.type
