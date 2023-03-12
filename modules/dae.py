@@ -208,8 +208,8 @@ def Extract(file_name):
                       ' The results may be faulty.')
 
             else:
-                raise Exception('Unrecognized geometry mode!'
-                                '\nFound:', type(primitives))
+                raise Exception('Unrecognized geometry mode! '
+                                'Found: ', type(primitives))
                 
             # Finalize Indices
             args['indices']     = str(indices)[1:-1]
@@ -330,7 +330,7 @@ def Extract(file_name):
 
                     # Raise an exception if any primitive is empty
                     if len(primitive) == 0:
-                        raise Exception('Data missing in', primitive)
+                        raise Exception('Data missing in: ', primitive)
 
                     point += str(primitive[i])[1:-1] + ', '
 
@@ -528,7 +528,7 @@ def Extract(file_name):
                             xml_mtrx_node.text = xml_mtrx_data
 
                         else:
-                            raise Exception('Unhandled transform type, found ', type(node_transform))
+                            raise Exception('Unhandled transform type, found: ', type(node_transform))
 
                     # There needs to be just any value in the tag, or SK xml parser
                     # will commit die instantly with little to no elaboration.
