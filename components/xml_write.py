@@ -10,9 +10,6 @@
 import re
 import os
 
-# Constants
-RESTORE_FLAIR = ('Unable to run. Please restore the '
-                 'files from Options!')
 
 # Export args data to the output file
 # Based on the selected template
@@ -49,4 +46,5 @@ def ExportXML(file_name, template, args):
     print(f'[COMPONENT][INFO]: Finished writing to "{o.name}"')
 
   except FileNotFoundError:
-    print(f'[COMPONENT][ERROR]: Template files not found!\n{RESTORE_FLAIR}')
+    raise Exception('Template files not found! Please '
+                    'restore the files from Options!')
