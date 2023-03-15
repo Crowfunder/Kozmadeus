@@ -112,7 +112,15 @@ def Main(file_names, template, no_export_file, strip_armature_tree):
             args['bone_tree'] = ' '
 
         if not no_export_file:
-          ExportXML(file_name, template, args)
+          try:
+            ExportXML(file_name, template, args)
+
+          except FileNotFoundError:
+            print('[COMPONENT][ERROR]: Template files not found! '
+                  'Attempting to restore the files from Options...')
+            RestoreFiles()
+            print('[MAIN][INFO]: Retrying to write to XML...')
+            ExportXML(file_name, template, args)
           
         # Restore the old template
         template = template_old

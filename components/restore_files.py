@@ -10,8 +10,8 @@ from wget import download as DownloadFile
 
 
 # Constants
-RESTORE_URL = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/restore.zip'
 RESTORE_FILENAME = 'restore.zip'
+RESTORE_URL = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/' + RESTORE_FILENAME
 
 
 # Function for files restoration
@@ -20,7 +20,7 @@ RESTORE_FILENAME = 'restore.zip'
 def RestoreFiles():
     
   if not os.path.isfile(RESTORE_FILENAME):
-    DownloadFile(RESTORE_URL, out=RESTORE_FILENAME)
+    DownloadFile(RESTORE_URL, bar=None, out=RESTORE_FILENAME)
 
   with ZipFile(RESTORE_FILENAME, 'r') as zip_file:
     zip_file.extractall()
