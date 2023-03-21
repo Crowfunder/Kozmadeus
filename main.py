@@ -32,20 +32,16 @@ for extension in modules.__modules__.keys():
 def ModuleData():
   
   print('List of installed modules:\n')
-  print(SEPARATOR[0:29])
   
   for module_name in modules.__modules__:
     
     module = modules.__modules__[module_name]
     data = module.module_data
     
+    print(SEPARATOR[0:29])
     for key in data:
       print(f'{key} : {data[key]}')
-      
-    print(SEPARATOR[0:29])
-    
-  print('Remember not to install any untrustworthy '
-        'modules!\nThey pose real danger!')
+
 
 
 # Output the appropriate model data Extract function
