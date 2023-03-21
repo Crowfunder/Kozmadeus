@@ -201,8 +201,7 @@ def GuiMenu():
 
   column_left = [
                   [
-                    sg.Text('Welcome to Kozmadeus!', size=(24,1), 
-                            justification='c', font=('Helvetica', 15))
+                     sg.Image('assets/kozmadeus_full.png', subsample=3)
                   ],
                   [
                     sg.Text('Select models to process'), 
