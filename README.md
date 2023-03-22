@@ -37,6 +37,7 @@ For precise documentation on User Interfaces functionality, see [Bundled User In
  3. Open command line or a terminal emulator in the unzipped folder
  
  **Note:** It's recommended to create a separate [Python virtual environment](https://docs.python.org/3/library/venv.html) and enter it with the appropriate script from `venv/Scripts` folder. 
+ 
  4. Install requirements from `requirements.txt` with command:
  ```bash
 pip install -r requirements.txt
