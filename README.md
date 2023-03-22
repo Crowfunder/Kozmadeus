@@ -5,16 +5,10 @@ Modular 3D model importer for Spiral Knights ([Clyde](https://github.com/threeri
 It relies on .xml templates that can be imported within Tudey scene viewer ([SpiralView](https://github.com/lucasluqui/spiralview)). 
 
 # Features
-- Importing Model Data:
- \- Geometries
- \- Texture Mappings
- \- Armatures
- \- ~~Animations~~ (WIP)
+- Importing Model Data: Geometries, Texture Mappings, Armatures, ~~Animations~~ (WIP)
 - Graphical and Command Line user interfaces
 - Importing to either Articulated or Static Spiral Knights XML model template
-- Support for various model formats:
-\- Collada (.dae)
-\- Wavefront (.obj) 
+- Support for various model formats: Collada (.dae), Wavefront (.obj) 
 - Importing multiple files at the same time
 - Update checker
 - Restoring template files, in case they are missing
@@ -41,6 +35,7 @@ For precise documentation on User Interfaces functionality, see [Bundled User In
  1. Install [Python3](https://www.python.org/downloads/) (Python 3.10 is the one that is sure to be working)
  2. Download the [source code of the repo](http.s://github.com/Crowfunder/Kozmadeus/archive/refs/heads/main.zip), unzip it
  3. Open command line or a terminal emulator in the unzipped folder
+ 
  **Note:** It's recommended to create a separate [Python virtual environment](https://docs.python.org/3/library/venv.html) and enter it with the appropriate script from `venv/Scripts` folder. 
  4. Install requirements from `requirements.txt` with command:
  ```bash
