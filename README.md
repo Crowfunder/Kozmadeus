@@ -66,11 +66,11 @@ pip install -U nuitka
 5. Compile it
 - Graphical User Interface:
 ```bash
-python -m nuitka --standalone --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico --enable-plugin=tk-inter --windows-disable-console gui.py 
+python -m nuitka --onefile --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=kozmadeus-gui.exe gui.py
 ```
 - Command Line Interface:
 ```bash
-python -m nuitka --standalone --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico cli.py
+python -m nuitka --onefile --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico --output-filename=kozmadeus-cli.exe cli.py
 ```
 
 # About
