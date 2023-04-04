@@ -24,7 +24,7 @@ For module-specific limitations see [Limitations and Known Issues](https://githu
 
 # Getting Started
 For usage instructions, see [Usage](https://github.com/Crowfunder/Kozmadeus/wiki/Usage).
-For precise documentation on User Interfaces functionality, see [Bundled User Interfaces](https://github.com/Crowfunder/Kozmadeus/wiki/Bundled-User-Interfaces).
+For precise documentation on User Interfaces functionality, see [Bundled User Interfaces](https://github.com/Crowfunder/Kozmadeus/wiki/User-Interfaces#bundled-user-interfaces).
 ## Precompiled builds
  1. Download the [latest release](https://github.com/Crowfunder/Kozmadeus/releases/latest).
  2. Unzip it.
