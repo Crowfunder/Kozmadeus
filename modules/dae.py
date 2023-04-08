@@ -6,6 +6,7 @@
 
 import gc
 import re
+import math
 import collada
 import xml.etree.ElementTree as ET
 
@@ -29,6 +30,60 @@ def ListFlatten(input_list):
         input_list = [item for sublist in input_list for item in sublist]
 
     return input_list
+
+
+# Function for converting Euler Angles to Quaternions
+# TAKES DEGREES AS INPUT, NOT RADIANS
+# Credit: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+def EulerToQuaternion(euler_rotations):
+    
+    # Initalize output quaternion dict
+    quaternion = dict.fromkeys(['x', 'y', 'z', 'w'])
+    
+    # Simplify input dict data
+    x = euler_rotations['x']
+    y = euler_rotations['y']
+    z = euler_rotations['z']
+    
+    # Convert degrees to radians
+    x = x*(math.pi/180)
+    y = y*(math.pi/180)
+    z = z*(math.pi/180)
+    
+    # Trig functs of all angles with abbreviations
+    # i.e. "cx" for cos(x*0.5)
+    cx = math.cos(x*0.5)
+    sx = math.cos(x*0.5)
+    cy = math.cos(y*0.5)
+    sy = math.cos(y*0.5)
+    cz = math.cos(z*0.5)
+    sz = math.cos(z*0.5)
+    
+    # Calculate quaternion elements
+    quaternion['x'] = sx * cy * cz - cx * sy * sz;
+    quaternion['y'] = cx * sy * cz + sx * cy * sz;
+    quaternion['z'] = cx * cy * sz - sx * sy * cz;
+    quaternion['w'] = cx * cy * cz + sx * sy * sz;
+    
+    return quaternion
+
+
+# Approximates uniform scale from scale matrix
+# Rewritten directly from the Clyde engine 
+# "The cube root of the signed volume of the 
+#  parallelepiped spanned by the axis vectors"
+def ApproximateUniformScale(scale_matrix):
+    
+    # Simplify name
+    m = scale_matrix
+    
+    # Calculate elements of the volume
+    vol1 = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2])
+    vol2 = m[1][0] * (m[2][1] * m[0][2] - m[0][1] * m[2][2])
+    vol3 = m[2][0] * (m[0][1] * m[1][2] - m[1][1] * m[0][2])
+
+    scale = float(vol1 + vol2 + vol3) ** float(1/3)
+    return scale
 
 
 
@@ -208,8 +263,8 @@ def Extract(file_name):
                       ' The results may be faulty.')
 
             else:
-                raise Exception('Unrecognized geometry mode! '
-                                'Found: ', type(primitives))
+                raise Exception(f'Unrecognized geometry mode! '
+                                f'Found: {type(primitives)}')
                 
             # Finalize Indices
             args['indices']     = str(indices)[1:-1]
@@ -506,6 +561,8 @@ def Extract(file_name):
                     if 'name' in main_node.xmlnode.keys():
                         
                         bone_name = main_node.xmlnode.get('name')
+
+                        # I firmly hope that's how these names are created
                         bone_sid_from_name = re.sub('[^0-9a-zA-Z]+', '_', bone_name)
 
                         if bone_sid_from_name in bones_list:
@@ -516,19 +573,83 @@ def Extract(file_name):
                     # Handle bone transforms
                     xml_trfm_node = ET.SubElement(xml_entr_node, 'transform')
                     xml_trfm_node.text = ' '
+                    
+                    # Define dict that may or may not be used
+                    # Used to store Euler XYZ rotation data in angles
+                    # If the model is using decomposed transforms
+                    # Default value: 0
+                    euler_rotations = dict.fromkeys(['x', 'y', 'z'], 0)
+                    
+                    # Marker that will signify that Euler rotations
+                    # need to be converted to quaternion
+                    euler_rotations_exist = False
+                    
+                    # Warning issued if uniform scale approximation is detected
+                    # It sucks, it seriously, seriously sucks, so the user should know
+                    scale_approx_warn = False
 
-                    # There shouldn't be more than a single transform
-                    # but better safe than sorry
+                    # Handle various transform types
+                    # It feels redundant but some tags' data 
+                    # requires additional handling and I'd rather 
+                    # have them separately if it's ever necessary
                     for node_transform in main_node.transforms:
+
                         if type(node_transform) is collada.scene.MatrixTransform:
+                            xml_trfm_chld_node = ET.SubElement(xml_trfm_node, 'matrix')
+                            xml_trfm_chld_data = node_transform.xmlnode.text.replace(' ', ', ')
+                            xml_trfm_chld_node.text = xml_trfm_chld_data
+
+                        # Decomposed transforms data below
+                        elif type(node_transform) is collada.scene.TranslateTransform:
+                            xml_trfm_chld_node = ET.SubElement(xml_trfm_node, 'translation')
+                            xml_trfm_chld_data = node_transform.xmlnode.text.replace(' ', ', ')
+                            xml_trfm_chld_node.text = xml_trfm_chld_data
+                        
+                        elif type(node_transform) is collada.scene.ScaleTransform:
+                            xml_trfm_chld_node = ET.SubElement(xml_trfm_node, 'scale')
+
+                            if not scale_approx_warn:
+                                print('[MODULE][WARNING]: Uniform scale approximation detected, '
+                                      'it is not accurate and may break the armature, '
+                                      'instead of decomposed, use matrix transforms.')
+                                scale_approx_warn = True
+
+                            xml_trfm_chld_node.text = str(ApproximateUniformScale(node_transform.matrix))
                             
-                            xml_mtrx_node = ET.SubElement(xml_trfm_node, 'matrix')
-                            xml_mtrx_data = ListFlatten(node_transform.matrix.tolist())
-                            xml_mtrx_data = str(xml_mtrx_data)[1:-1]
-                            xml_mtrx_node.text = xml_mtrx_data
+                        # Support only for Blender-specific decomposed transformations
+                        elif type(node_transform) is collada.scene.RotateTransform:
+                            euler_rotations_exist = True
+                            
+                            # Get rotation element letter in lowercase
+                            # Checks the rotation tag SID
+                            # Accepts format "rotationX", "rotationY" etc
+                            # THAT'S WHY IT'S BLENDER-ONLY, IT SUCKS ASS
+                            rotation_elem = node_transform.xmlnode.get('sid')[-1].lower()
+                            
+                            # Emergency check if it even makes sense
+                            if rotation_elem not in euler_rotations.keys():
+                                raise Exception(f'Unsupported rotation type: '
+                                                f'{node_transform.xmlnode.get("sid")}')
+                                
+                            # Throw the angle into the euler dict
+                            # later it'll get transformed into an xml tag
+                            euler_rotations[rotation_elem] = node_transform.angle
 
                         else:
-                            raise Exception('Unhandled transform type, found: ', type(node_transform))
+                            raise Exception(f'Unhandled transform type, found: {type(node_transform)}')
+
+                        
+                    # Convert Euler rotation angles to Quaternions
+                    # If they are found
+                    if euler_rotations_exist:
+                        xml_rotn_node = ET.SubElement(xml_trfm_node, 'rotation')
+                        qtrnon = EulerToQuaternion(euler_rotations)
+
+                        # Convert to data from list in XYZW order
+                        xml_rotn_data = str([qtrnon[x] for x in ['x','y','z','w']])[1:-1]
+                        
+                        xml_rotn_node.text = xml_rotn_data
+
 
                     # There needs to be just any value in the tag, or SK xml parser
                     # will commit die instantly with little to no elaboration.
