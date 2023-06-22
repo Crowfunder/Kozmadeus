@@ -53,17 +53,17 @@ def EulerToQuaternion(euler_rotations):
     # Trig functs of all angles with abbreviations
     # i.e. "cx" for cos(x*0.5)
     cx = math.cos(x*0.5)
-    sx = math.cos(x*0.5)
     cy = math.cos(y*0.5)
-    sy = math.cos(y*0.5)
     cz = math.cos(z*0.5)
-    sz = math.cos(z*0.5)
+    sx = math.sin(x*0.5)
+    sy = math.sin(y*0.5)
+    sz = math.sin(z*0.5)
     
     # Calculate quaternion elements
-    quaternion['x'] = sx * cy * cz - cx * sy * sz;
-    quaternion['y'] = cx * sy * cz + sx * cy * sz;
-    quaternion['z'] = cx * cy * sz - sx * sy * cz;
-    quaternion['w'] = cx * cy * cz + sx * sy * sz;
+    quaternion['x'] = sx * cy * cz - cx * sy * sz
+    quaternion['y'] = cx * sy * cz + sx * cy * sz
+    quaternion['z'] = cx * cy * sz - sx * sy * cz
+    quaternion['w'] = cx * cy * cz + sx * sy * sz
     
     return quaternion
 
@@ -521,6 +521,12 @@ def Extract(file_name):
                 armature_node = output_node
                 unnamed_bone_num = 0
 
+                # Warning issued if uniform scale approximation is detected
+                # It sucks, it seriously, seriously sucks, so the user should know
+                # Var has to be defined outside of the function so that 
+                # it can be sent just once
+                scale_approx_warn = False
+
                 ### BEGIN ArmatureNodeToXML
                 def ArmatureNodeToXML(main_node, path=list(), xml_path=list()):
 
@@ -583,10 +589,6 @@ def Extract(file_name):
                     # Marker that will signify that Euler rotations
                     # need to be converted to quaternion
                     euler_rotations_exist = False
-                    
-                    # Warning issued if uniform scale approximation is detected
-                    # It sucks, it seriously, seriously sucks, so the user should know
-                    scale_approx_warn = False
 
                     # Handle various transform types
                     # It feels redundant but some tags' data 
@@ -608,6 +610,7 @@ def Extract(file_name):
                         elif type(node_transform) is collada.scene.ScaleTransform:
                             xml_trfm_chld_node = ET.SubElement(xml_trfm_node, 'scale')
 
+                            nonlocal scale_approx_warn
                             if not scale_approx_warn:
                                 print('[MODULE][WARNING]: Uniform scale approximation detected, '
                                       'it is not accurate and may break the armature, '
