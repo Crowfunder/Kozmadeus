@@ -155,10 +155,18 @@ def Extract(file_name):
                     data.append((0.0, 0.0))
 
                 # Reorder data in separate lists
-                for key_old, key_new in indices_trans.items():
-                    data[key_new] = prim_list[key_old]
+                try:
+                    for key_old, key_new in indices_trans.items():
+                        data[key_new] = prim_list[key_old]
+                    return data
 
-                return data
+                except IndexError:
+                    print("[MODULE][ERROR]: Highly possibly the model has "
+                          "multiple material mappings, it is not "
+                          "supported at the time being, the model " 
+                          "should use a single texture, refer to the "
+                          "wiki documentation.")
+                    raise Exception("Multiple material mappings")
 
 
             # Check if model modes are the same
