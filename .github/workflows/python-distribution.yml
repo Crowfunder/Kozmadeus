@@ -54,8 +54,9 @@ jobs:
       - name: Prepare Compiled Distributions
         run: |
           mkdir build/artifact
-          Copy-Item -Force -Recurse build/cli.dist/* build/artifact
-          Copy-Item -Force -Recurse build/gui.dist/* build/artifact
+          dir build/gui.dist
+          Move-Item -Force build/cli.dist/* build/artifact
+          Move-Item -Force build/gui.dist/* build/artifact
           Rename-Item build/artifact/gui.exe kozmadeus-gui.exe
           Rename-Item build/artifact/cli.exe kozmadeus-cli.exe
           Copy-Item -Force -Recurse assets build/artifact
@@ -63,6 +64,7 @@ jobs:
           Copy-Item -Force -Recurse docs build/artifact
           Copy-Item README.md build/artifact
           Copy-Item LICENSE.md build/artifact
+          dir build/artifact
           
 
       # Uploads artifact
