@@ -1,0 +1,73 @@
+name: Python Distribution
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+
+  build:
+    # Windows is currently the only platform this action supports
+    runs-on: windows-latest
+
+    steps:
+
+      # Check-out repository
+      - uses: actions/checkout@v3
+
+      # Setup Python
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
+          architecture: 'x64' 
+          cache: 'pip'
+          cache-dependency-path: |
+            **/requirements*.txt
+
+      - name: Compile kozmadeus-gui
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: gui.py
+          enable-plugins: tk-inter
+          windows-icon-from-ico: assets/kozmadeus.ico
+          include-package: modules
+          disable-console: true
+          standalone: true
+          onefile: false
+
+      - name: Compile kozmadeus-cli
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: cli.py
+          windows-icon-from-ico: assets/kozmadeus.ico
+          include-package: modules
+          standalone: true
+          onefile: false
+
+      - name: Prepare Compiled Distributions
+        run: |
+          mkdir build/artifact/Kozmadeus
+          Move-Item -Force build/cli.dist/* build/artifact
+          Move-Item -Force build/gui.dist/* build/artifact
+          Rename-Item build/artifact/gui.exe build/artifact/kozmadeus-gui.exe
+          Rename-Item build/artifact/cli.exe build/artifact/kozmadeus-cli.exe
+          Copy-Item -Force -Recurse assets build/artifact
+          Copy-Item -Force -Recurse templates build/artifact
+          Copy-Item -Force -Recurse docs build/artifact
+          Copy-Item README.md build/artifact
+          Copy-Item LICENSE.md build/artifact
+          
+
+      # Uploads artifact
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Windows Build
+          path: build/artifact/Kozmadeus
