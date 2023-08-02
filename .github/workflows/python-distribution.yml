@@ -56,8 +56,8 @@ jobs:
           mkdir build/artifact/Kozmadeus
           Move-Item -Force build/cli.dist/* build/artifact
           Move-Item -Force build/gui.dist/* build/artifact
-          Rename-Item build/artifact/gui.exe build/artifact/kozmadeus-gui.exe
-          Rename-Item build/artifact/cli.exe build/artifact/kozmadeus-cli.exe
+          Rename-Item build/artifact/gui.exe kozmadeus-gui.exe
+          Rename-Item build/artifact/cli.exe kozmadeus-cli.exe
           Copy-Item -Force -Recurse assets build/artifact
           Copy-Item -Force -Recurse templates build/artifact
           Copy-Item -Force -Recurse docs build/artifact
