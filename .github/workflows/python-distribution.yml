@@ -53,7 +53,7 @@ jobs:
 
       - name: Prepare Compiled Distributions
         run: |
-          mkdir build/artifact/Kozmadeus
+          mkdir build/artifact
           Move-Item -Force build/cli.dist/* build/artifact
           Move-Item -Force build/gui.dist/* build/artifact
           Rename-Item build/artifact/gui.exe kozmadeus-gui.exe
@@ -70,4 +70,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Windows Build
-          path: build/artifact/Kozmadeus
+          path: build/artifact
