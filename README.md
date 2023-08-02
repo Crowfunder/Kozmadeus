@@ -12,6 +12,7 @@ It relies on .xml templates that can be imported within Tudey scene viewer ([Spi
 - Importing multiple files at the same time
 - Update checker
 - Restoring template files, in case they are missing
+- Handle both Matrix and Decomposed transforms (Collada)
 - Hotkeys (GUI)
 - Returning geometry data to stdout (CLI)
 
