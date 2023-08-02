@@ -29,6 +29,10 @@ jobs:
           cache-dependency-path: |
             **/requirements*.txt
 
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
       - name: Compile kozmadeus-gui
         uses: Nuitka/Nuitka-Action@main
         with:
@@ -38,6 +42,7 @@ jobs:
           windows-icon-from-ico: assets/kozmadeus.ico
           include-package: modules
           disable-console: true
+          enable-console: false
           standalone: true
           onefile: false
 
@@ -54,7 +59,6 @@ jobs:
       - name: Prepare Compiled Distributions
         run: |
           mkdir build/artifact
-          dir build/gui.dist
           Move-Item -Force build/cli.dist/* build/artifact
           Move-Item -Force build/gui.dist/* build/artifact
           Rename-Item build/artifact/gui.exe kozmadeus-gui.exe
@@ -64,8 +68,6 @@ jobs:
           Copy-Item -Force -Recurse docs build/artifact
           Copy-Item README.md build/artifact
           Copy-Item LICENSE.md build/artifact
-          dir build/artifact
-          
 
       # Uploads artifact
       - name: Upload Artifacts
