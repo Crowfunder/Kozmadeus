@@ -33,7 +33,7 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Compile kozmadeus-gui
+      - name: Compile GUI
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
@@ -46,7 +46,7 @@ jobs:
           standalone: true
           onefile: false
 
-      - name: Compile kozmadeus-cli
+      - name: Compile CLI
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
@@ -58,20 +58,22 @@ jobs:
 
       - name: Prepare Compiled Distributions
         run: |
-          mkdir build/artifact
-          Move-Item -Force build/cli.dist/* build/artifact
-          Move-Item -Force build/gui.dist/* build/artifact
-          Rename-Item build/artifact/gui.exe kozmadeus-gui.exe
-          Rename-Item build/artifact/cli.exe kozmadeus-cli.exe
-          Copy-Item -Force -Recurse assets build/artifact
-          Copy-Item -Force -Recurse templates build/artifact
-          Copy-Item -Force -Recurse docs build/artifact
-          Copy-Item README.md build/artifact
-          Copy-Item LICENSE.md build/artifact
+          mkdir build/artifact/Kozmadeus
+          echo Merging CLI and GUI into one artifact...
+          Move-Item -Force build/cli.dist/* build/artifact/Kozmadeus
+          Move-Item -Force build/gui.dist/* build/artifact/Kozmadeus
+          Rename-Item build/artifact/Kozmadeus/gui.exe kozmadeus-gui.exe
+          Rename-Item build/artifact/Kozmadeus/cli.exe kozmadeus-cli.exe
+          echo Appending necessary assets... 
+          Copy-Item -Force -Recurse assets build/artifact/Kozmadeus
+          Copy-Item -Force -Recurse templates build/artifact/Kozmadeus
+          Copy-Item -Force -Recurse docs build/artifact/Kozmadeus
+          Copy-Item README.md build/artifact/Kozmadeus
+          Copy-Item LICENSE.md build/artifact/Kozmadeus
 
       # Uploads artifact
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: Windows Build
+          name: build (windows-latest)
           path: build/artifact
