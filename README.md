@@ -1,4 +1,4 @@
-![banner](https://media.discordapp.net/attachments/955809154105217124/1087392414253203547/Kozmadeus_full_logo.png)
+![banner](https://raw.githubusercontent.com/Crowfunder/Kozmadeus/main/assets/kozmadeus_full.png)
 
 Modular 3D model importer for Spiral Knights ([Clyde](https://github.com/threerings/clyde)). A direct successor of [Bootshuze](https://github.com/Puzovoz/Bootshuze) and [Bootshuze-GUI](https://github.com/Crowfunder/Bootshuze-GUI) completely revamping the design and codebase, as well as adding numerous QOL improvements along with new options. 
 
