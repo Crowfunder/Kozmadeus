@@ -48,7 +48,7 @@ class MaxExtent(ModelDataSimple):
 class ModelData(ModelDataSimple):
 	size: int
 	def tostring(self):
-		return f'<{self.tag_name}><size>{self.size}</size><type>FLOAT</type><floatArray>{self._tostring()}</floatArray></{self.tag_name}>'
+		return f'<{self.tag_name}><size>{self.size}</size><type>FLOAT</type><stride>{self.size*4}</stride><floatArray>{self._tostring()}</floatArray></{self.tag_name}>'
 
 
 @dataclass
@@ -73,7 +73,7 @@ class Texcoords(ModelData):
 class VertexAttribData(ModelData):
 	name: str
 	def tostring(self):
-		return f'<{self.tag_name}><size>{self.size}</size><type>FLOAT</type><floatArray>{self._tostring()}</floatArray><name>{self.name}</name></{self.tag_name}>'
+		return f'<{self.tag_name}><size>{self.size}</size><stride>{self.size*4}</stride><type>FLOAT</type><floatArray>{self._tostring()}</floatArray><name>{self.name}</name></{self.tag_name}>'
 	 
 
 @dataclass
@@ -128,39 +128,63 @@ class Primitive:
 	geom_class:  str = 'com.threerings.opengl.geometry.config.GeometryConfig$IndexedStored'
 
 	def tostring(self):
-		return f'''<entry><texture>{self.texture}</texture><tag>{self.tag}</tag><geometryclass="{self.geom_class}"><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds><mode>{self.mode}</mode>{self.texcoords.tostring()}{self.normals.tostring()}{self.vertices.tostring()}<end>{self.indices_end}</end>{self.indices.tostring()}</geometry></entry>'''
+		return f'''<entry><texture>{self.texture}</texture><tag>{self.tag}</tag><geometry class="{self.geom_class}"><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds><mode>{self.mode}</mode>{self.texcoords.tostring()}{self.normals.tostring()}{self.vertices.tostring()}<end>{self.indices_end}</end>{self.indices.tostring()}</geometry></entry>'''
 
 
 @dataclass(kw_only=True)
 class SkinnedPrimitive(Primitive):
 	bones: Bones
 	vertex_attribs: VertexAttribArray
-	geom_class = 'com.threerings.opengl.geometry.config.GeometryConfig$SkinnedIndexedStored'
+	geom_class: str = 'com.threerings.opengl.geometry.config.GeometryConfig$SkinnedIndexedStored'
 
 	def tostring(self):
-		return f'''<entry><texture>{self.texture}</texture><tag>{self.tag}</tag><geometryclass="{self.geom_class}"><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds><mode>{self.mode}</mode>{self.vertex_attribs.tostring()}{self.texcoords.tostring()}{self.normals.tostring()}{self.vertices.tostring()}<end>{self.indices_end}</end>{self.indices.tostring()}{self.bones.tostring()}</geometry></entry>'''
+		return f'''<entry><texture>{self.texture}</texture><tag>{self.tag}</tag><geometry class="{self.geom_class}"><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds><mode>{self.mode}</mode>{self.vertex_attribs.tostring()}{self.texcoords.tostring()}{self.normals.tostring()}{self.vertices.tostring()}<end>{self.indices_end}</end>{self.indices.tostring()}{self.bones.tostring()}</geometry></entry>'''
 
 
 @dataclass
 class Material:
 
-	name = 'Model/Opaque'
 	texture:	str
 	tag:		str
+	name: str = 'Model/Opaque'
 
 	def tostring(self):
-		return f'<entry><outer rdepth="1"/><texture>{self.texture}</texture><tag>{self.tag}</tag><material><name>{self.name}</name></material></entry>'
+		return f'<entry><outer rdepth="1"/><texture>{self.texture}</texture><tag>{self.tag}</tag><material><name>{self.name}</name><arguments><key class="java.lang.String">Texture</key><value class="com.threerings.config.ConfigReference"><name>2D/File/Default</name><arguments><key class="java.lang.String">File</key><value class="java.lang.String">{self.texture}</value><key class="java.lang.String">Magnify</key><value class="com.threerings.opengl.renderer.config.TextureConfig$MagFilter">LINEAR</value><key class="java.lang.String">Minify</key><value class="com.threerings.opengl.renderer.config.TextureConfig$MinFilter">LINEAR</value></arguments></value></arguments></material></entry>'
 
 
 @dataclass
 class SkinnedMaterial(Material):
-	name = 'Model/Skinned/Masked (Soft)'
+	name: str = 'Model/Skinned/Masked (Soft)'
 
 
 @dataclass
 class Model:
 	primitives: list[Primitive | SkinnedPrimitive]
-	materials: 	list[Material]
+	materials: 	list[Material | SkinnedMaterial]
 	min_extent: MinExtent
 	max_extent: MaxExtent
 	bone_tree_xml: ET.Element | None
+	mode: str = ''
+
+	def toargs(self):
+		args = {}
+
+		args['primitives'] = ' '
+		for primitive in self.primitives:
+			args['primitives'] += primitive.tostring()
+
+		args['materials'] = ' '
+		for material in self.materials:
+			args['materials'] += material.tostring()
+
+		args['min_extent'] = self.min_extent.tostring()
+		args['max_extent'] = self.max_extent.tostring()
+
+		if self.bone_tree_xml:
+			args['bone_tree'] = ET.tostring(self.bone_tree_xml, encoding='unicode')
+		else:
+			args['bone_tree'] = ' '
+		
+		args['mode'] = self.mode
+
+		return args
