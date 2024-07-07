@@ -17,9 +17,10 @@ from components.xml_write     import ExportXML
 from components.module_import import ProcessModules
 from components.module_import import ModuleData
 from components.module_import import FILE_TYPES_LIST
+from components.model_classes import SetModelType
 
 
-def Main(file_names, template, no_export_file, strip_armature_tree):
+def Main(file_names, mode, no_export_file, strip_armature_tree):
 
   # Initiate Logger
   logger_filename = 'kozmadeus.log'
@@ -45,37 +46,32 @@ def Main(file_names, template, no_export_file, strip_armature_tree):
       geometries = Extract(file_name)
       print('[MAIN][INFO]: Finished extracting the model data.')
 
-      for args in geometries:
-        
-        # If the model has bones, swap the template
-        template_old = template
-        if args['bones'] != '':
-          template += '_bones'
+      for model in geometries:
 
-          # Option necessary for importing armors.
-          # Erases "bones" tag to fix armor armature
-          # conflicting with pc model armature.
-          # Also, there needs to be just any value 
-          # in the tag, or SK xml parser will commit die
-          # instantly with little to no elaboration.
-          if strip_armature_tree:
-            print('[MAIN][INFO]: Stripped armature tree data.')
-            args['bone_tree'] = ' '
+        model = SetModelType(model, mode)
+
+        # Option necessary for importing armors.
+        # Erases "bones" tag to fix armor armature
+        # conflicting with pc model armature.
+        if strip_armature_tree:
+          print('[MAIN][INFO]: Stripped armature tree data.')
+          model.bone_tree_xml = None
+
+        # Set template to model geometry template
+        template = 'template_model'
+        print('[MAIN][INFO]: Writing geometry data...')
 
         if not no_export_file:
           try:
-            ExportXML(file_name, template, args)
+            ExportXML(file_name, template, model.toargs())
 
           except FileNotFoundError:
             print('[COMPONENT][ERROR]: Template files not found! '
                   'Attempting to restore the files from Options...')
             RestoreFiles()
             print('[MAIN][INFO]: Retrying to write to XML...')
-            ExportXML(file_name, template, args)
-          
-        # Restore the old template
-        template = template_old
-        
+            ExportXML(file_name, template, model.toargs())
+
       if no_export_file:
         # Close the logger so it doesn't log the file contents!
         LoggerCloser()

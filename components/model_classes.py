@@ -8,6 +8,10 @@ from dataclasses import dataclass
 import xml.etree.ElementTree as ET
 
 
+######################
+# Base Model Data
+######################
+
 @dataclass
 class ModelDataSimple:
 	data: 		list
@@ -88,9 +92,13 @@ class BoneWeights(VertexAttribData):
 	size: int = 4
 
 
+######################
+# Model Data Wrappers
+######################
+
 @dataclass
-class ModelDataArray:
-	entry_list: list[ModelData]
+class EntryArray:
+	entry_list: list
 	tag_name:   str
 
 	def _tostring(self):
@@ -104,6 +112,11 @@ class ModelDataArray:
 
 
 @dataclass
+class ModelDataArray(EntryArray):
+	entry_list: list[ModelData]
+
+
+@dataclass
 class TexcoordsArray(ModelDataArray):
 	tag_name: str = 'texCoordArrays'	
 
@@ -112,6 +125,10 @@ class TexcoordsArray(ModelDataArray):
 class VertexAttribArray(ModelDataArray):
 	tag_name: str = 'vertexAttribArrays'
 
+
+######################
+# Primitives
+######################
 
 @dataclass(kw_only=True)
 class Primitive:
@@ -142,6 +159,37 @@ class SkinnedPrimitive(Primitive):
 
 
 @dataclass
+class PrimitiveArray(EntryArray):
+	entry_list: list[Primitive | SkinnedPrimitive]
+	tag_name: str = 'visible'
+
+
+@dataclass
+class PrimitiveWrapper:
+	visible: PrimitiveArray
+	min_extent: MinExtent
+	max_extent: MaxExtent
+	tag_name: str = 'node'
+
+	def tostring(self):
+		return f'<{self.tag_name}><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds>{self.visible.tostring()}</{self.tag_name}>'
+
+
+@dataclass
+class ArticulatedPrimitiveWrapper(PrimitiveWrapper):
+	tag_name: str = 'skin'
+
+
+@dataclass
+class StaticPrimitiveWrapper(PrimitiveWrapper):
+	tag_name: str = 'meshes'
+
+
+######################
+# Materials
+######################
+
+@dataclass
 class Material:
 
 	texture:	str
@@ -158,33 +206,73 @@ class SkinnedMaterial(Material):
 
 
 @dataclass
+class MaterialArray(EntryArray):
+	entry_list: list[Material | SkinnedMaterial]
+	tag_name: str = 'materialMappings'
+
+
+######################
+# Model
+######################
+
+@dataclass(kw_only=True)
 class Model:
-	primitives: list[Primitive | SkinnedPrimitive]
-	materials: 	list[Material | SkinnedMaterial]
-	min_extent: MinExtent
-	max_extent: MaxExtent
+	primitives: ArticulatedPrimitiveWrapper | StaticPrimitiveWrapper | PrimitiveWrapper
+	materials: 	MaterialArray
 	bone_tree_xml: ET.Element | None
 	mode: str = ''
+
+	def _get_bone_tree_xml(self):
+		if self.bone_tree_xml:
+			return ET.tostring(self.bone_tree_xml, encoding='unicode')
+		return ' '
+
 
 	def toargs(self):
 		args = {}
 
-		args['primitives'] = ' '
-		for primitive in self.primitives:
-			args['primitives'] += primitive.tostring()
-
-		args['materials'] = ' '
-		for material in self.materials:
-			args['materials'] += material.tostring()
-
-		args['min_extent'] = self.min_extent.tostring()
-		args['max_extent'] = self.max_extent.tostring()
-
-		if self.bone_tree_xml:
-			args['bone_tree'] = ET.tostring(self.bone_tree_xml, encoding='unicode')
-		else:
-			args['bone_tree'] = ' '
-		
+		args['primitives'] = self.primitives.tostring()
+		args['materials'] = self.materials.tostring()
+		args['bone_tree'] = self._get_bone_tree_xml()
 		args['mode'] = self.mode
 
 		return args
+
+
+@dataclass(kw_only=True)
+class StaticModel(Model):
+	mode: str = 'Static'
+
+
+@dataclass(kw_only=True)
+class ArticulatedModel(Model):
+	mode: str = 'Articulated'
+
+	def _get_bone_tree_xml(self):
+		if self.bone_tree_xml:
+			return ET.tostring(self.bone_tree_xml, encoding='unicode')
+		return '<root><name>%ROOT%</name><transform> </transform><children> </children></root>'
+
+
+def SetModelType(model: Model, mode: str):
+	"""
+	Sets the model type based on the given mode.
+
+	Args:
+		model (Model): The model object to set the type for.
+		mode (str): The mode to set the model type to. Valid values are 'Articulated' or 'Static'.
+
+	Returns:
+		Model: The model object with the updated type.
+
+	Raises:
+		Exception: If an unknown model mode is provided.
+	"""
+	if mode.capitalize() == 'Articulated':
+		return ArticulatedModel(primitives=ArticulatedPrimitiveWrapper(visible=model.primitives.visible, min_extent=model.primitives.min_extent, 
+							max_extent=model.primitives.max_extent), materials=model.materials, bone_tree_xml=model.bone_tree_xml)
+	elif mode.capitalize() == 'Static':
+		return StaticModel(primitives=StaticPrimitiveWrapper(visible=model.primitives.visible, min_extent=model.primitives.min_extent, 
+							max_extent=model.primitives.max_extent), materials=model.materials, bone_tree_xml=model.bone_tree_xml)
+	else:
+		raise Exception('Unknown model mode.')

@@ -32,7 +32,6 @@ def ExportXML(file_name, template, args):
 
     # Write to output file using regex substitution
     # Grabbed directly from Bootshuze
-    print(f'[COMPONENT][INFO]: Writing output with "{template}"...')    
     regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
 
     for line in i:

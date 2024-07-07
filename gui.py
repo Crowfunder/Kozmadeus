@@ -371,9 +371,9 @@ def GuiMenu():
               
         # Get the user settings
         if window['_ARTICULATED-MODE_'].Get():
-          template = 'template_articulated'
+          mode = 'Articulated'
         elif window['_STATIC-MODE_'].Get():
-          template = 'template_static'
+          mode = 'Static'
         
         strip_armature_tree = window['_STRIP-ARMATURE-TREE_'].Get()
 
@@ -387,7 +387,7 @@ def GuiMenu():
 
           # Long boi taken directly from PySimpleGUI Cookbook
           # Creates a separate thread to prevent the program from freezing
-          window.start_thread(lambda: Main(file_names, template, 
+          window.start_thread(lambda: Main(file_names, mode, 
                                            False, strip_armature_tree), 
                               '_THREAD-COMPLETE_')
 

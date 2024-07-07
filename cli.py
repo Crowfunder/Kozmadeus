@@ -13,7 +13,6 @@ import argparse
 from main import RestoreFiles, CheckUpdates, ModuleData, Main
 from main import VERSION_CURRENT, SEPARATOR
 
-
 # Class for disabling the output log
 # strictly for --silent option
 # Source: https://stackoverflow.com/questions/8391411/how-to-block-calls-to-print
@@ -95,7 +94,7 @@ def CliMenu():
   
   parser.add_argument('files_list', nargs='+',
                       help='<Required> Input the files to process')
-  parser.add_argument('-t', '--type', choices=['articulated', 'static'],
+  parser.add_argument('-m', '--mode', choices=['articulated', 'static'],
                       default='articulated', help='Output model type choice\n'
                       '- articulated: used for most cases\n'
                       '- static: used most notably for importing armors')
@@ -137,8 +136,7 @@ def CliMenu():
       PrintUpdates(False)
       print(SEPARATOR)
 
-    template = 'template_' + parser_args.type
-    geometry = Main(parser_args.files_list, template, parser_args.no_file, parser_args.strip_armature_tree)
+    geometry = Main(parser_args.files_list, parser_args.mode, parser_args.no_file, parser_args.strip_armature_tree)
 
   if parser_args.no_file:
     print(geometry)

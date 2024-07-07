@@ -11,6 +11,8 @@
 #########################################
 
 import gc
+from components.model_classes import PrimitiveWrapper, Vertices, Texcoords, TexcoordsArray, Normals, MinExtent, MaxExtent, Primitive, Model, Indices, Material, ArticulatedModel, StaticModel, PrimitiveArray, MaterialArray
+
 
 module_data = {
     'Name'       : 'Wavefront',
@@ -21,9 +23,11 @@ module_data = {
     'Multimesh'  : False
 }
 
+
 def Extract(file_name):
     with open(file_name, 'r') as file:
-        args       = dict()
+        tag = 'default'
+        texture = 'texture.png'
         faces      = list()
         indices    = list()
         vertices   = list()
@@ -37,11 +41,10 @@ def Extract(file_name):
         for line in lines:
             # Store faces that determine the numbers for indices
             if line[0] == 'f':
-                if 'mode' not in args:
-                    indices_count = len(line.split()[1:])
-                    if indices_count == 2: args['mode'] = 'LINES'
-                    if indices_count == 3: args['mode'] = 'TRIANGLES'
-                    if indices_count == 4: args['mode'] = 'QUADS'
+                indices_count = len(line.split()[1:])
+                if indices_count == 2: mode = 'LINES'
+                if indices_count == 3: mode = 'TRIANGLES'
+                if indices_count == 4: mode = 'QUADS'
 
                 for face in line.split()[1:]:
                     if face not in faces: faces.append(face.replace('\n', ''))
@@ -60,47 +63,49 @@ def Extract(file_name):
                     min_extent[index] = min(min_extent[index], float(vertex))
                     max_extent[index] = max(max_extent[index], float(vertex))
         
-        print('[MODULE][INFO]: Geometry mode: ', args['mode'])
+        print('[MODULE][INFO]: Geometry mode: ', mode)
             
         vt = list(filter(lambda x: x[:2] == 'vt', lines))
         vn = list(filter(lambda x: x[:2] == 'vn', lines))
         v  = list(filter(lambda x: x[:2] == 'v ', lines))
-            
+        
         if len(vt) == 0:
             raise Exception('Input model lacks UV mapping. '
                             'Model cannot be correctly created.')
-            
+        
         print('[MODULE][INFO]: Calculating vertices...')
-            
+
         # Generate vertices list based on indices from input file
+        vertices = []
+        texcoords = []
+        normals = []
         for face in faces:
             face_indices = face.split('/')
             
             # Texture coordinates, UV
-            vertices.extend(vt[int(face_indices[1])-1].split()[1:])
+            texcoords.extend([float(val) for val in vt[int(face_indices[1])-1].split()[1:]])
             
             # Face normals
-            vertices.extend(vn[int(face_indices[2])-1].split()[1:])
+            normals.extend([float(val) for val in vn[int(face_indices[2])-1].split()[1:]])
             
             # Position coordinates, XYZ
-            vertices.extend(v [int(face_indices[0])-1].split()[1:])
+            vertices.extend([float(val) for val in v[int(face_indices[0])-1].split()[1:]])
 
+        material = Material(tag=tag, texture=texture)
+        primitive = Primitive(vertices=Vertices(vertices), normals=Normals(normals), texcoords=TexcoordsArray([Texcoords(texcoords)]), 
+                              indices=Indices(indices), min_extent=MinExtent(min_extent), max_extent=MaxExtent(max_extent), 
+                              mode=mode, tag=tag, texture=texture, indices_end=max(indices))
+
+        model = Model(primitives=PrimitiveWrapper(visible=PrimitiveArray([primitive]), min_extent=MinExtent(min_extent), max_extent=MaxExtent(max_extent)), 
+                      materials=MaterialArray(entry_list=[material]), bone_tree_xml=None)
 
         del faces
         del lines
         del v, vn, vt
-
-        args['min_extent'] = str(min_extent)[1:-1]
         del min_extent
-        args['max_extent'] = str(max_extent)[1:-1]
         del max_extent
-        args['indices']    = str(indices)[1:-1]
-        args['indices_end'] = str(max(indices))
         del indices
-        args['vertices']   = ', '.join(vertices)
         del vertices
-        args['bones']      = ''
-
         gc.collect()
-        geometries.append(args)
+        geometries.append(model)
         return geometries
