@@ -22,6 +22,10 @@ class ModelDataSimple:
 	
 	def tostring(self):
 		return f'<{self.tag_name}>{self._tostring()}</{self.tag_name}>'
+	
+	def __iter__(self):
+		for item in self.data:
+			yield item
 
 
 @dataclass
@@ -53,6 +57,10 @@ class ModelData(ModelDataSimple):
 	size: int
 	def tostring(self):
 		return f'<{self.tag_name}><size>{self.size}</size><type>FLOAT</type><stride>{self.size*4}</stride><floatArray>{self._tostring()}</floatArray></{self.tag_name}>'
+	
+	def __iter__(self):
+		for index in range(len(self.data)//self.size):
+			yield self.data[index*self.size : index*self.size + self.size]
 
 
 @dataclass
@@ -109,6 +117,10 @@ class EntryArray:
 	
 	def tostring(self):
 		return f'<{self.tag_name}>{self._tostring()}</{self.tag_name}>'
+	
+	def __iter__(self):
+		for entry in self.entry_list:
+			yield entry
 
 
 @dataclass
