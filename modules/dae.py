@@ -175,19 +175,21 @@ def Extract(file_name):
 
             Returns:
                 list: The reordered primitive data.
-
-            Raises:
-                Exception: If there are multiple material mappings in the model.
             """
+
+            # Don't reorder if indices are the same
+            if old_indices == new_indices:
+                return prim_list
+
             # Transitional indices used for reordering data
             indices_trans = dict()
-            data = list()
-
             for i in range(0, len(new_indices)):
                 indices_trans[old_indices[i]] = new_indices[i]
 
+            # Initalize output data with empty vertices array
+            data = list()
             for _ in range(0, len(prim_list)):
-                data.append((0.0, 0.0))
+                data.append([0.0] * len(prim_list[0]))
 
             # Reorder data in separate lists
             for key_old, key_new in indices_trans.items():
