@@ -10,6 +10,7 @@ import math
 import collada
 import xml.etree.ElementTree as ET
 
+from components.model_classes import *
 
 
 module_data = {
@@ -37,6 +38,7 @@ def ListFlatten(input_list):
         input_list = [item for sublist in input_list for item in sublist]
 
     return input_list
+
 
 
 def EulerToQuaternion(euler_rotations):
@@ -114,6 +116,9 @@ def ApproximateUniformScale(scale_matrix):
 
 def Extract(file_name):
 
+    # Initalize constants
+    tag = 'default'
+
     print('[MODULE][INFO]: Reading input model file...')
     with open(file_name, 'rb') as file:
         geometries     = list()
@@ -134,33 +139,28 @@ def Extract(file_name):
     for geometry in mesh.geometries:
         
         print(f'[MODULE][INFO]: Processing geometry: "{geometry.id}"')
-        
-        # Initalize some vars
-        args        = dict()
-        indices     = list()
-        vertices_v  = list()
-        vertices_vn = list()
-        vertices_vt = list()
-        args['bones']      = ''
-        args['min_extent'] = list()
-        args['max_extent'] = list()
 
-        if len(geometry.primitives) > 1:
-            print('[MODULE][INFO]: Found ', len(geometry.primitives),
-                    ' primitives, will try to merge...')
-            print('[MODULE][WARNING]: Merging primitives may '
-                    'cause several issues, it is '
-                    'recommended to merge them manually.')
-            
+        ##########################################
+        # Materials Library Section
+        #
+        # - Extract existing materials info
+        ##########################################
 
+        materials_list = []
+        for material in mesh.materials:
+            texture = material.id
+            materials_list.append(Material(texture=texture, tag=tag))
+        materials = MaterialArray(materials_list)
 
 
         ##############################################
         # Geometry Library Section
-        # 
+        #  
         # - Extract vertices, indices and normals
-        # - Merge/triangulate primitives if necessary
         # - Fix normals if necessary
+        # - Calculate min/max extents
+        # - Extract connected material name
+        # - Initiate primitives
         #
         ##############################################
 
@@ -197,115 +197,86 @@ def Extract(file_name):
             return data
 
 
-        # Check if model modes are the same
-        # if not triangulate or remove LineSets
-        old_mode = type(geometry.primitives[0])
-        flag_mode_convert = False
-        
-        for primitives in geometry.primitives:
-            
-            if primitives.normal is not None:
-                if len(primitives.normal) != len(primitives.vertex):
-                    
-                    print('[MODULE][INFO]: Will triangulate geometries to fix '
-                            'missing normals, if necessary.')
-                    flag_mode_convert = True
-                    break
-
-            elif type(primitives) != old_mode:
-
-                flag_mode_convert = True
-                break
-            
-            old_mode = type(primitives)
-
-
         # Get v, vn and vt, merge all primitives if multiple found
-        indices_end = -1
+        primitives_list = []
         print('[MODULE][INFO]: Calculating indices...')
         for primitives in geometry.primitives:
+            
+            if primitives.normal is None or len(primitives.normal) != len(primitives.vertex):
+                if type(primitives) is collada.lineset.LineSet:
+                    print('[MODULE][WARNING]: Cannot generate normals for LineSet, this set of primitives will be skipped.')
+                    continue
 
-            # Warnings for unlikely, albeit possible cases
-            # that are not handled right now
-            if len(primitives.texcoordset) > 1:
-                print('[MODULE][WARNING]: Unable to handle more than '
-                        'one set of UV mappings, falling back '
-                        'to the first one found.')
+                print('[MODULE][INFO]: Generating normals...')
+                primitives.generateNormals()
 
-            if flag_mode_convert and type(primitives) is collada.lineset.LineSet:
-                print('[MODULE][WARNING]: Unable to triangulate a LineSet, ' 
-                        'this set of primitives will be skipped.')
+            # Initalize temporary primitives
+            v  = primitives.vertex.tolist()
+            vn = primitives.normal.tolist()
+
+            vt_list = []
+            for texcoords in primitives.texcoordset:
+                vt_list.append(texcoords.tolist())
+
+            # Calculate min/max extent for vertices
+            print('[MODULE][INFO]: Calculating min/max extents...')
+
+            # Collapse indices subgeometries
+            indices_v  = ListFlatten(primitives.vertex_index.tolist())
+            indices_vn = ListFlatten(primitives.normal_index.tolist())
+
+            indices_vt_list = []
+            for indices in primitives.texcoord_indexset:
+                indices_vt_list.append(ListFlatten(indices.tolist()))
+
+            # Select the best candidate for general indices
+            indices = sorted([indices_v,indices_vn]+indices_vt_list, key=len, reverse=True)[0]
+
+            print('[MODULE][INFO]: Generalizing indices...')
+            v = Vertices(PrimitiveReorder(v, indices_v, indices))
+            vn = Normals(PrimitiveReorder(vn, indices_vn, indices))
+            for i, vt in enumerate(vt_list):
+                vt_list[i] = Texcoords(PrimitiveReorder(vt, indices_vt_list[i], indices))
+            vt_list = TexcoordsArray(vt_list)
+
+            indices_end = max(indices)
+
+            # Determine the model mode
+            if type(primitives) is collada.lineset.LineSet:
+                mode = 'LINES'
+                print('[MODULE][WARNING]: Experimental geometry mode: ', type(primitives),
+                        ' The results may be faulty.')
+                
+            elif type(primitives) is collada.triangleset.TriangleSet:
+                mode = 'TRIANGLES'
+                #print('[MODULE][INFO]: Geometry mode: ', type(primitives))
+                
+            elif type(primitives) is collada.polylist.Polygon:
+                mode = 'POLYGON'
+                print('[MODULE][WARNING]: Experimental geometry mode: ', type(primitives),
+                        ' The results may be faulty.')
+                
+            elif type(primitives) is collada.polylist.Polylist:
+                mode = 'POLYGON'
+                print('[MODULE][WARNING]: Experimental Geometry Mode: ', type(primitives),
+                        ' The results may be faulty.')
 
             else:
+                raise Exception(f'Unrecognized geometry mode! '
+                                f'Found: {type(primitives)}')
 
-                if flag_mode_convert and type(primitives) is not collada.triangleset.TriangleSet:
-                    print('[MODULE][INFO]: Triangulating geometries to merge...')
-                    primitives = primitives.triangleset()
+            # Extract connected material
+            texture = primitives.material
 
-                if len(primitives.normal) != len(primitives.vertex):
-                    print('[MODULE][INFO]: Generating normals...')
-                    primitives.generateNormals()
-
-                # Initalize temporary primitives
-                v  = primitives.vertex.tolist()
-                vn = primitives.normal.tolist()
-                vt = primitives.texcoordset[0].tolist()
-
-                # Collapse indices subgeometries
-                indices_v  = ListFlatten(primitives.vertex_index.tolist())
-                indices_vn = ListFlatten(primitives.normal_index.tolist())
-                indices_vt = ListFlatten(primitives.texcoord_indexset[0].tolist())
-
-                # If primitives don't follow the same indices
-                # as vertices, reorder them
-                if indices_vn != indices_v:
-                    print('[MODULE][INFO]: Reordering normals to match vertex indices...')
-                    vn = PrimitiveReorder(vn, indices_vn, indices_v)
-                    
-                if indices_vt != indices_v:
-                    print('[MODULE][INFO]: Reordering texcoords to match vertex indices...')
-                    vt = PrimitiveReorder(vt, indices_vt, indices_v)
-                    
-                # Append the finished vertices to final primitives
-                vertices_v  += v
-                vertices_vn += vn
-                vertices_vt += vt
-                
-                # Calculate indices
-                for index in indices_v:
-                    indices.append(index + indices_end + 1)
-
-                indices_end = max(indices)
-
-
-        # Determine the model mode
-        if type(primitives) is collada.lineset.LineSet:
-            args['mode'] = 'LINES'
-            print('[MODULE][WARNING]: Experimental geometry mode: ', type(primitives),
-                    ' The results may be faulty.')
-            
-        elif type(primitives) is collada.triangleset.TriangleSet:
-            args['mode'] = 'TRIANGLES'
-            print('[MODULE][INFO]: Geometry mode: ', type(primitives))
-            
-        elif type(primitives) is collada.polylist.Polygon:
-            args['mode'] = 'POLYGON'
-            print('[MODULE][WARNING]: Experimental geometry mode: ', type(primitives),
-                    ' The results may be faulty.')
-            
-        elif type(primitives) is collada.polylist.Polylist:
-            args['mode'] = 'POLYGON'
-            print('[MODULE][WARNING]: Experimental Geometry Mode: ', type(primitives),
-                    ' The results may be faulty.')
-
-        else:
-            raise Exception(f'Unrecognized geometry mode! '
-                            f'Found: {type(primitives)}')
-            
-        # Finalize Indices
-        args['indices']     = str(indices)[1:-1]
-        args['indices_end'] = str(indices_end)
-
+            # Finalize Primitive
+            primitives_list.append(Primitive(vertices=v,
+                                             normals=vn,
+                                             texcoords=vt_list,
+                                             indices=Indices(indices),
+                                             mode=mode,
+                                             tag=tag,
+                                             texture=texture,
+                                             indices_end=indices_end))
 
 
         ################################################
@@ -436,23 +407,6 @@ def Extract(file_name):
                 point += str(primitive[i])[1:-1] + ', '
 
             points.append(point)
-
-        # Calculate min/max extent for vertices
-        print('[MODULE][INFO]: Calculating min/max extents...')
-        
-        # Initialize values with first vertex
-        # by creating a copy, not a reference
-        min_extent = vertices_v[0][:]
-        max_extent = vertices_v[0][:]
-
-        # Iterate through vertices to find min/max
-        for vertex in vertices_v:
-            for index, point in enumerate(vertex):
-                min_extent[index] = min(min_extent[index], vertex[index])
-                max_extent[index] = max(max_extent[index], vertex[index])
-
-        args['min_extent'] = str(min_extent)[1:-1]
-        args['max_extent'] = str(max_extent)[1:-1]
 
         # Del obsolete vars
         del vertices_vt, vertices_vn, vertices_v
