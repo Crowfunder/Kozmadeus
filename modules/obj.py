@@ -50,19 +50,6 @@ def Extract(file_name):
                     if face not in faces: faces.append(face.replace('\n', ''))
                     indices.append(faces.index(face))
         
-            # Calculate min/max extent for vertices
-            if line[:2] == 'v ':
-                
-                # Initialize values with first vertex
-                if 'min_extent' not in vars() and 'max_extent' not in vars():
-                    min_extent = [float(val) for val in line.split()[1:]]
-                    max_extent = [float(val) for val in line.split()[1:]]
-                
-                # And change values as we go through other vertices  
-                for index, vertex in enumerate(line.split()[1:]):
-                    min_extent[index] = min(min_extent[index], float(vertex))
-                    max_extent[index] = max(max_extent[index], float(vertex))
-        
         print('[MODULE][INFO]: Geometry mode: ', mode)
             
         vt = list(filter(lambda x: x[:2] == 'vt', lines))
@@ -93,17 +80,14 @@ def Extract(file_name):
 
         material = Material(tag=tag, texture=texture)
         primitive = Primitive(vertices=Vertices(vertices), normals=Normals(normals), texcoords=TexcoordsArray([Texcoords(texcoords)]), 
-                              indices=Indices(indices), min_extent=MinExtent(min_extent), max_extent=MaxExtent(max_extent), 
-                              mode=mode, tag=tag, texture=texture, indices_end=max(indices))
+                              indices=Indices(indices), mode=mode, tag=tag, texture=texture, indices_end=max(indices))
 
-        model = Model(primitives=PrimitiveWrapper(visible=PrimitiveArray([primitive]), min_extent=MinExtent(min_extent), max_extent=MaxExtent(max_extent)), 
+        model = Model(primitives=PrimitiveWrapper(visible=PrimitiveArray([primitive])), 
                       materials=MaterialArray(entry_list=[material]), bone_tree_xml=None)
 
         del faces
         del lines
         del v, vn, vt
-        del min_extent
-        del max_extent
         del indices
         del vertices
         gc.collect()
