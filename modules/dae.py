@@ -233,10 +233,10 @@ def Extract(file_name):
             indices = sorted([indices_v,indices_vn]+indices_vt_list, key=len, reverse=True)[0]
 
             print('[MODULE][INFO]: Generalizing indices...')
-            v = Vertices(PrimitiveReorder(v, indices_v, indices))
-            vn = Normals(PrimitiveReorder(vn, indices_vn, indices))
+            v = Vertices(ListFlatten(PrimitiveReorder(v, indices_v, indices)))
+            vn = Normals(ListFlatten(PrimitiveReorder(vn, indices_vn, indices)))
             for i, vt in enumerate(vt_list):
-                vt_list[i] = Texcoords(PrimitiveReorder(vt, indices_vt_list[i], indices))
+                vt_list[i] = Texcoords(ListFlatten(PrimitiveReorder(vt, indices_vt_list[i], indices)))
             vt_list = TexcoordsArray(vt_list)
 
             indices_end = max(indices)
@@ -321,8 +321,8 @@ def Extract(file_name):
 
                     print(f'[MODULE][INFO]: Armature found! Processing: "{geom_ctrl.id}"...')
 
-                    # Extract bone names
-                    bones = Bones(geom_ctrl.weight_joints.data.tolist())
+                    # Extract bone names, stored in a fairly weird way so has to be retrieved like that
+                    bones = Bones([bone[0] for bone in geom_ctrl.weight_joints.data.tolist()])
                     
                     # Extract bone indices and weights
                     bone_slots = list()
