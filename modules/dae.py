@@ -322,9 +322,7 @@ def Extract(file_name):
                     print(f'[MODULE][INFO]: Armature found! Processing: "{geom_ctrl.id}"...')
 
                     # Extract bone names
-                    for bone in geom_ctrl.weight_joints.data.tolist():
-                        args['bones'] += str(bone)[2:-2] + ', '
-                    args['bones'] = args['bones'][:-2]
+                    bones = Bones(geom_ctrl.weight_joints.data.tolist())
                     
                     # Extract bone indices and weights
                     bone_slots = list()
@@ -334,10 +332,10 @@ def Extract(file_name):
                         bone_weights = list()
 
                         # Extract bone weights and indices for single vertex
-                        for bone_index, weight_index in bone_vertex.tolist():
+                        for bone_index, weight_index in bone_vertex:
                             bone_indices.append(float(bone_index))
 
-                            for weight in geom_ctrl.weights.data.tolist()[weight_index]:
+                            for weight in geom_ctrl.weights.data[weight_index]:
                                 bone_weights.append(float(weight))
 
                         if len(bone_weights) > 4:
