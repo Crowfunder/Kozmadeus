@@ -5,7 +5,7 @@
 ###############################################################
 
 import modules
-from components.logger import SEPARATOR
+from utils.logger import SEPARATOR
 
 # Retrieve a list of file types based on the modules.
 # '__modules__' is a dict of all modules' names and objects

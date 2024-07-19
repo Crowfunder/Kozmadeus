@@ -8,11 +8,11 @@
 import gc
 
 # Internal Imports
-from components.check_updates import CheckUpdates
-from components.check_updates import VERSION_CURRENT
-from components.restore_files import RestoreFiles
-from components.logger        import LoggerInit
-from components.logger        import SEPARATOR
+from utils.check_updates      import CheckUpdates
+from utils.check_updates      import VERSION_CURRENT
+from utils.restore_files      import RestoreFiles
+from utils.logger             import LoggerInit
+from utils.logger             import SEPARATOR
 from components.xml_write     import ExportXML
 from components.module_import import ProcessModules
 from components.module_import import ModuleData
