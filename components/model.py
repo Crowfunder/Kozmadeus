@@ -47,18 +47,6 @@ class Indices(ModelDataSimple):
 
 
 @dataclass
-class MinExtent(ModelDataSimple):
-	data: list[float]
-	tag_name: str = 'minExtent'
-
-
-@dataclass
-class MaxExtent(ModelDataSimple):
-	data: list[float]
-	tag_name: str = 'maxExtent'
-
-
-@dataclass
 class ModelData(ModelDataSimple):
 	size: int
 	def tostring(self):
@@ -67,6 +55,14 @@ class ModelData(ModelDataSimple):
 	def __iter__(self):
 		for index in range(len(self.data)//self.size):
 			yield self.data[index*self.size : index*self.size + self.size]
+
+	def __len__(self):
+		return len(self.data)//self.size
+
+	def __getitem__(self, index):
+		if index > len(self):
+			raise IndexError('vertex index out of range')
+		return self.data[index*self.size : index*self.size + self.size]
 
 
 @dataclass
@@ -177,8 +173,8 @@ class Primitive:
 				min_extent[index] = min(min_extent[index], vertex[index])
 				max_extent[index] = max(max_extent[index], vertex[index])
 
-		self.min_extent = MinExtent(min_extent)
-		self.max_extent = MaxExtent(max_extent)
+		self.min_extent = ModelDataSimple(min_extent, 'minExtent')
+		self.max_extent = ModelDataSimple(max_extent, 'maxExtent')
 
 	def tostring(self):
 		return f'''<entry><texture>{self.texture}</texture><tag>{self.tag}</tag><geometry class="{self.geom_class}"><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds><mode>{self.mode}</mode>{self.texcoords.tostring()}{self.normals.tostring()}{self.vertices.tostring()}<end>{self.indices_end}</end>{self.indices.tostring()}</geometry></entry>'''
@@ -240,12 +236,12 @@ class PrimitiveWrapper:
 		max_extent = [-math.inf]*vertex_size
 		for i in range(vertex_size):
 			max_extent[i] = max([prim.max_extent[i] for prim in self.visible])
-		self.max_extent = MaxExtent(max_extent)
+		self.max_extent = ModelDataSimple(max_extent, 'maxExtent')
 
 		min_extent = [math.inf]*vertex_size
 		for i in range(vertex_size):
 			min_extent[i] = min([prim.min_extent[i] for prim in self.visible])
-		self.min_extent = MinExtent(min_extent)
+		self.min_extent = ModelDataSimple(min_extent, 'minExtent')
 
 	def get_primitive_by_index(self, index):
 		"""

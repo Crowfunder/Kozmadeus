@@ -17,7 +17,7 @@ from components.xml_write     import ExportXML
 from components.module_import import ProcessModules
 from components.module_import import ModuleData
 from components.module_import import FILE_TYPES_LIST
-from components.model_classes import SetModelType
+from components.model import SetModelType
 
 
 def Main(file_names, mode, no_export_file, strip_armature_tree):

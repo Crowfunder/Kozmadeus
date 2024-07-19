@@ -11,7 +11,7 @@
 #########################################
 
 import gc
-from components.model_classes import PrimitiveWrapper, Vertices, Texcoords, TexcoordsArray, Normals, MinExtent, MaxExtent, Primitive, Model, Indices, Material, ArticulatedModel, StaticModel, PrimitiveArray, MaterialArray
+from components.model import *
 
 
 module_data = {
