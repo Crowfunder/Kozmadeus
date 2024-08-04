@@ -18,6 +18,8 @@ class ModelDataSimple:
 	tag_name: 	str
 
 	def _tostring(self):
+		if len(self.data) == 0:
+			return ' '
 		return str(self.data)[1:-1]
 	
 	def tostring(self):
@@ -49,6 +51,10 @@ class Indices(ModelDataSimple):
 @dataclass
 class ModelData(ModelDataSimple):
 	size: int
+	def __post_init__(self):
+		if len(self.data) % self.size:
+			raise ValueError(f'length of data not divisible by {self.size}')
+
 	def tostring(self):
 		return f'<{self.tag_name}><size>{self.size}</size><type>FLOAT</type><stride>{self.size*4}</stride><floatArray>{self._tostring()}</floatArray></{self.tag_name}>'
 	
@@ -115,6 +121,8 @@ class EntryArray:
 		entry_list_str = ''
 		for entry in self.entry_list:
 			entry_list_str += entry.tostring()
+		if not entry_list_str:
+			return ' '
 		return entry_list_str
 	
 	def tostring(self):
@@ -141,6 +149,183 @@ class TexcoordsArray(EntryArray):
 class VertexAttribArray(EntryArray):
 	entry_list: list[BoneIndices | BoneWeights]
 	tag_name: str = 'vertexAttribArrays'
+
+
+######################
+# Transforms
+######################
+def EulerToQuaternion(euler_rotations):
+    """
+    Function for converting Euler Angles to Quaternions
+    TAKES DEGREES AS INPUT, NOT RADIANS
+    Credit: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+    Args:
+        euler_rotations (list): Dictionary containing Euler rotation angles in degrees.
+
+    Returns:
+        list: Dictionary containing quaternion values (x, y, z, w).
+    """
+    
+    # Initalize output quaternion dict
+    quaternion = [0.0]*4
+    
+    # Simplify input dict data
+    x = euler_rotations[0]
+    y = euler_rotations[1]
+    z = euler_rotations[2]
+    
+    # Convert degrees to radians
+    x = x*(math.pi/180)
+    y = y*(math.pi/180)
+    z = z*(math.pi/180)
+    
+    # Trig functs of all angles with abbreviations
+    # i.e. "cx" for cos(x*0.5)
+    cx = math.cos(x*0.5)
+    cy = math.cos(y*0.5)
+    cz = math.cos(z*0.5)
+    sx = math.sin(x*0.5)
+    sy = math.sin(y*0.5)
+    sz = math.sin(z*0.5)
+    
+    # Calculate quaternion elements
+    quaternion[0] = sx * cy * cz - cx * sy * sz
+    quaternion[1] = cx * sy * cz + sx * cy * sz
+    quaternion[2] = cx * cy * sz - sx * sy * cz
+    quaternion[3] = cx * cy * cz + sx * sy * sz
+    
+    return quaternion
+
+
+def ApproximateUniformScale(scale_matrix):
+    """
+    Approximates uniform scale from scale matrix, 
+    rewritten directly from the Clyde engine.
+    "The cube root of the signed volume of the 
+     parallelepiped spanned by the axis vectors"
+
+    Args:
+        scale_matrix (list): A 3x3 scale matrix.
+
+    Returns:
+        float: The approximate uniform scale factor.
+
+    """
+    
+    m = scale_matrix
+    vol1 = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2])
+    vol2 = m[1][0] * (m[2][1] * m[0][2] - m[0][1] * m[2][2])
+    vol3 = m[2][0] * (m[0][1] * m[1][2] - m[1][1] * m[0][2])
+
+    scale = float(vol1 + vol2 + vol3) ** float(1/3)
+    return scale
+
+
+@dataclass
+class ModelDataFixed(ModelDataSimple):
+	size: int
+	def _size_check(self):
+		if len(self.data) != self.size:
+			raise ValueError(f'incorrect data length: found {len(self.data)}, expected {self.size}')
+
+	def _set_data(self):
+		'''
+		Sets i.e x,y,z attribs referencing to specific elements in data
+		'''
+		pass
+
+	def _convert_data(self):
+		'''
+		Method allowing converting input data in different format to intended format
+		to accept input in various formats.
+		'''
+		pass
+
+	def __post_init__(self):
+		self._convert_data()
+		self._size_check()
+		self._set_data()
+
+@dataclass
+class Translation(ModelDataFixed):
+	tag_name: str = 'translation'
+	size: int = 3
+
+	def _set_data(self):
+		self.x = self.data[0]
+		self.y = self.data[1]
+		self.z = self.data[2]
+
+
+@dataclass
+class Rotation(ModelDataFixed):
+	'''
+	Accepts rotation quaternion as list of 4 floats (xyzw respectively) or euler rotation as 3 floats (xyz respectively)
+	that get converted into quaternion rotation on-the-fly
+	'''
+	tag_name: str = 'rotation'
+	size: int = 4
+	def _set_data(self):
+		self.x = self.data[0]
+		self.y = self.data[1]
+		self.z = self.data[2]
+		self.w = self.data[3]
+
+	def _convert_data(self):
+		if len(self.data) == 3:
+			self.data = EulerToQuaternion(self.data)
+
+
+@dataclass
+class Scale(ModelDataFixed):
+	'''
+	Accepts a list of a single float as uniform scale or 9 floats as Euler scale matrix
+	that gets converted into uniform scale on-the-fly
+	'''
+	tag_name: str = 'scale'
+	size: int = 1
+	def _convert_data(self):
+		if len(self.data) == 3:
+			self.data = ApproximateUniformScale(self.data)
+
+	def _set_data(self):
+		self.scale = self.data[0]
+
+
+@dataclass
+class Matrix(ModelDataFixed):
+	tag_name: str = 'matrix'
+	size: int = 16
+
+
+@dataclass
+class Transform(EntryArray):
+	entry_list: list[Translation | Rotation | Scale | Matrix]
+	tag_name: str = 'transform'
+
+
+######################
+# Armature Tree
+######################
+@dataclass
+class ArmatureNode:
+	'''
+	Singular node of armature. If parent is None, automatically sets _tag_name to "root".
+	'''
+	transform: Transform
+	children: 'list[ArmatureNode]'	# Lazy evaluation of types needed if dataclass contains itself
+	parent: 'ArmatureNode | None'
+	name: str
+	_tag_name: str = 'entry'
+
+	def __post_init__(self):
+		if not self.parent:
+			self._tag_name = 'root'
+		self._children = EntryArray(self.children, tag_name='children')
+
+	def tostring(self):
+		return f'<{self._tag_name}><name>{self.name}<name>{self.transform.tostring()}{self._children.tostring()}</{self._tag_name}'
 
 
 ######################
@@ -242,24 +427,6 @@ class PrimitiveWrapper:
 		for i in range(vertex_size):
 			min_extent[i] = min([prim.min_extent[i] for prim in self.visible])
 		self.min_extent = ModelDataSimple(min_extent, 'minExtent')
-
-	def get_primitive_by_index(self, index):
-		"""
-		Retrieves a primitive object from the list of visible primitives based on the given index, as if they were merged.
-
-		Parameters:
-			index (int): The index of the primitive to retrieve.
-
-		Returns:
-			Primitive or None: The primitive object corresponding to the given index, or None if not found.
-		"""
-		offset = 0
-		for primitive in self.visible:
-			primitive_offset = primitive.indices_end + offset
-			if index <= primitive_offset:
-				return primitive
-			offset += primitive.indices_end
-		return None
 
 	def tostring(self):
 		return f'<{self.tag_name}><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds>{self.visible.tostring()}</{self.tag_name}>'
