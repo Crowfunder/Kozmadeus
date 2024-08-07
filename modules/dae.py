@@ -238,12 +238,12 @@ def Extract(file_name):
             return output_weights
 
 
-        def GetPrimitiveByIndex(primitive_wrapper: PrimitiveWrapper, index):
+        def GetPrimitiveByIndex(primitive_wrapper: PrimitivesWrapper, index):
             """
             Retrieves a primitive object from the list of visible primitives based on the given index, as if they were merged.
 
             Parameters:
-                primitive_wrapper (PrimitiveWrapper): PrimitiveWrapper object to retireve from
+                primitive_wrapper (PrimitivesWrapper): PrimitivesWrapper object to retireve from
                 index (int): The index of the primitive to retrieve.
 
             Returns:
@@ -508,16 +508,13 @@ def Extract(file_name):
             euler_rotations_exist = False
 
             # Handle various transform types
-            # It feels redundant but some tags' data 
-            # requires additional handling and I'd rather 
-            # have them separately if it's ever necessary
             for node_transform in collada_node.transforms:
                 data = [float(i) for i in node_transform.xmlnode.text.split()]
 
                 if type(node_transform) is collada.scene.MatrixTransform:
                     transforms_list.append(Matrix(data)) 
 
-                # Decomposed transforms data below
+            # Decomposed transforms data below
                 elif type(node_transform) is collada.scene.TranslateTransform:
                     transforms_list.append(Translation(data))
                 
@@ -569,14 +566,13 @@ def Extract(file_name):
                 obj_node = ArmatureNode(transform=obj_transform, parent=obj_path[-1], name=obj_name)
 
             if any(isinstance(val, collada.scene.Node) for val in collada_node.children):
-                
                 collada_path.append(collada_node)
                 obj_path.append(obj_node)
-                
+
                 for child in collada_node.children:
                     if type(child) is collada.scene.Node:
                         ColladaNodeToObj(child, collada_path, obj_path)
-                    
+
                 collada_path.pop(-1)
                 obj_path.pop(-1)
 
@@ -628,7 +624,7 @@ def Extract(file_name):
             # to prevent repetitions in generated bone names
             armature_root_node = None
             bones_list = args['bones'].split(', ')
-            collada_main_node = located_collada_node
+            collada_main_node = located_collada_node_name
             unnamed_bone_num = 0
 
             # Warning issued if uniform scale approximation is detected

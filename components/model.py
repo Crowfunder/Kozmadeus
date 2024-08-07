@@ -247,6 +247,7 @@ class ModelDataFixed(ModelDataSimple):
 		self._size_check()
 		self._set_data()
 
+
 @dataclass
 class Translation(ModelDataFixed):
 	tag_name: str = 'translation'
@@ -325,6 +326,7 @@ class ArmatureNode:
 		else:
 			self._add_to_parent()
 		self._children = EntryArray(self.children, tag_name='children')
+		self.children = self._children.entry_list   # link by reference
 		if self.children:
 			self._add_to_children()
 
@@ -412,45 +414,40 @@ def PrimitiveAddSkin(primitive: Primitive, bones: Bones, vertex_attribs: VertexA
 		vertex_attribs=vertex_attribs
 	)
 
-
 @dataclass
-class PrimitiveArray(EntryArray):
-	entry_list: list[Primitive | SkinnedPrimitive]
-	tag_name: str = 'visible'
-
-
-@dataclass
-class PrimitiveWrapper:
-	visible: PrimitiveArray
+class PrimitivesWrapper:
+	visible: list[Primitive | SkinnedPrimitive]
 	tag_name: str = 'node'
 
 	def __post_init__(self):
 		self._calculate_extents()
+		self._visible = EntryArray(self.visible, tag_name='visible')
+		self.visible = self._visible.entry_list	 # link by reference
 
 	def _calculate_extents(self):
 		vertex_size = 3
 
 		max_extent = [-math.inf]*vertex_size
 		for i in range(vertex_size):
-			max_extent[i] = max([prim.max_extent[i] for prim in self.visible])
+			max_extent[i] = max([prim.max_extent[i] for prim in self._visible])
 		self.max_extent = ModelDataSimple(max_extent, 'maxExtent')
 
 		min_extent = [math.inf]*vertex_size
 		for i in range(vertex_size):
-			min_extent[i] = min([prim.min_extent[i] for prim in self.visible])
+			min_extent[i] = min([prim.min_extent[i] for prim in self._visible])
 		self.min_extent = ModelDataSimple(min_extent, 'minExtent')
 
 	def tostring(self):
-		return f'<{self.tag_name}><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds>{self.visible.tostring()}</{self.tag_name}>'
+		return f'<{self.tag_name}><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds>{self._visible.tostring()}</{self.tag_name}>'
 
 
 @dataclass
-class ArticulatedPrimitiveWrapper(PrimitiveWrapper):
+class ArticulatedPrimitivesWrapper(PrimitivesWrapper):
 	tag_name: str = 'skin'
 
 
 @dataclass
-class StaticPrimitiveWrapper(PrimitiveWrapper):
+class StaticPrimitivesWrapper(PrimitivesWrapper):
 	tag_name: str = 'meshes'
 
 
@@ -460,7 +457,6 @@ class StaticPrimitiveWrapper(PrimitiveWrapper):
 
 @dataclass
 class Material:
-
 	texture:	str
 	tag:		str
 	name: str = 'Model/Opaque'
@@ -499,25 +495,22 @@ class MaterialArray(EntryArray):
 
 @dataclass(kw_only=True)
 class Model:
-	primitives: ArticulatedPrimitiveWrapper | StaticPrimitiveWrapper | PrimitiveWrapper
+	primitives: ArticulatedPrimitivesWrapper | StaticPrimitivesWrapper | PrimitivesWrapper
 	materials: 	MaterialArray
-	bone_tree_xml: ET.Element | None
+	armature: ArmatureNode | None = None
 	mode: str = ''
 
-	def _get_bone_tree_xml(self):
-		if self.bone_tree_xml:
-			return ET.tostring(self.bone_tree_xml, encoding='unicode')
+	def _get_armature_str(self):
+		if self.armature:
+			return self.armature.tostring()
 		return ' '
-
 
 	def toargs(self):
 		args = {}
-
 		args['primitives'] = self.primitives.tostring()
 		args['materials'] = self.materials.tostring()
-		args['bone_tree'] = self._get_bone_tree_xml()
+		args['armature'] = self._get_armature_str()
 		args['mode'] = self.mode
-
 		return args
 
 
@@ -530,9 +523,9 @@ class StaticModel(Model):
 class ArticulatedModel(Model):
 	mode: str = 'Articulated'
 
-	def _get_bone_tree_xml(self):
-		if self.bone_tree_xml:
-			return ET.tostring(self.bone_tree_xml, encoding='unicode')
+	def _get_armature_str(self):
+		if self.armature:
+			return self.armature.tostring()
 		return '<root><name>%ROOT%</name><transform> </transform><children> </children></root>'
 
 
@@ -551,10 +544,10 @@ def SetModelType(model: Model, mode: str):
 		Exception: If an unknown model mode is provided.
 	"""
 	if mode.capitalize() == 'Articulated':
-		return ArticulatedModel(primitives=ArticulatedPrimitiveWrapper(visible=model.primitives.visible), 
-								materials=model.materials, bone_tree_xml=model.bone_tree_xml)
+		return ArticulatedModel(primitives=ArticulatedPrimitivesWrapper(visible=model.primitives.visible), 
+								materials=model.materials, armature=model.armature)
 	elif mode.capitalize() == 'Static':
-		return StaticModel(primitives=StaticPrimitiveWrapper(visible=model.primitives.visible), 
-						   materials=model.materials, bone_tree_xml=model.bone_tree_xml)
+		return StaticModel(primitives=StaticPrimitivesWrapper(visible=model.primitives.visible), 
+						   materials=model.materials, armature=model.armature)
 	else:
 		raise Exception('Unknown model mode.')

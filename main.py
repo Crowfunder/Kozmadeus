@@ -55,7 +55,7 @@ def Main(file_names, mode, no_export_file, strip_armature_tree):
         # conflicting with pc model armature.
         if strip_armature_tree:
           print('[MAIN][INFO]: Stripped armature tree data.')
-          model.bone_tree_xml = None
+          model.armature = None
 
         # Set template to model geometry template
         template = 'template_model'

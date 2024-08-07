@@ -9,7 +9,7 @@
     </influences>
     {{ materials }}
     <source>model.mxml</source>
-    {{ bone_tree }}
+    {{ armature }}
     {{ primitives }}
   </implementation>
   <configs>
