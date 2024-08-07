@@ -314,15 +314,27 @@ class ArmatureNode:
 	Singular node of armature. If parent is None, automatically sets _tag_name to "root".
 	'''
 	transform: Transform
-	children: 'list[ArmatureNode]'	# Lazy evaluation of types needed if dataclass contains itself
-	parent: 'ArmatureNode | None'
 	name: str
+	parent: 'ArmatureNode | None' = None
+	children: 'list[ArmatureNode]' = []	 # Lazy evaluation of types needed if dataclass contains itself
 	_tag_name: str = 'entry'
 
 	def __post_init__(self):
 		if not self.parent:
 			self._tag_name = 'root'
+		else:
+			self._add_to_parent()
 		self._children = EntryArray(self.children, tag_name='children')
+		if self.children:
+			self._add_to_children()
+
+	def _add_to_parent(self):
+		if self.parent:
+			self.parent._children.entry_list.append(self)
+
+	def _add_to_children(self):
+		for child in self._children.entry_list:
+			child.parent = self
 
 	def tostring(self):
 		return f'<{self._tag_name}><name>{self.name}<name>{self.transform.tostring()}{self._children.tostring()}</{self._tag_name}'

@@ -10,7 +10,7 @@ import math
 import collada
 import xml.etree.ElementTree as ET
 
-from components.model_classes import *
+from components.model import *
 
 
 module_data = {
@@ -38,79 +38,6 @@ def ListFlatten(input_list):
         input_list = [item for sublist in input_list for item in sublist]
 
     return input_list
-
-
-
-def EulerToQuaternion(euler_rotations):
-    """
-    Function for converting Euler Angles to Quaternions
-    TAKES DEGREES AS INPUT, NOT RADIANS
-    Credit: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-
-    Args:
-        euler_rotations (dict): Dictionary containing Euler rotation angles in degrees.
-
-    Returns:
-        dict: Dictionary containing quaternion values (x, y, z, w).
-    """
-    
-    # Initalize output quaternion dict
-    quaternion = dict.fromkeys(['x', 'y', 'z', 'w'])
-    
-    # Simplify input dict data
-    x = euler_rotations['x']
-    y = euler_rotations['y']
-    z = euler_rotations['z']
-    
-    # Convert degrees to radians
-    x = x*(math.pi/180)
-    y = y*(math.pi/180)
-    z = z*(math.pi/180)
-    
-    # Trig functs of all angles with abbreviations
-    # i.e. "cx" for cos(x*0.5)
-    cx = math.cos(x*0.5)
-    cy = math.cos(y*0.5)
-    cz = math.cos(z*0.5)
-    sx = math.sin(x*0.5)
-    sy = math.sin(y*0.5)
-    sz = math.sin(z*0.5)
-    
-    # Calculate quaternion elements
-    quaternion['x'] = sx * cy * cz - cx * sy * sz
-    quaternion['y'] = cx * sy * cz + sx * cy * sz
-    quaternion['z'] = cx * cy * sz - sx * sy * cz
-    quaternion['w'] = cx * cy * cz + sx * sy * sz
-    
-    return quaternion
-
-
-
-def ApproximateUniformScale(scale_matrix):
-    """
-    Approximates uniform scale from scale matrix, 
-    rewritten directly from the Clyde engine.
-    "The cube root of the signed volume of the 
-     parallelepiped spanned by the axis vectors"
-
-    Args:
-        scale_matrix (list): A 3x3 scale matrix.
-
-    Returns:
-        float: The approximate uniform scale factor.
-
-    """
-    
-    # Simplify name
-    m = scale_matrix
-    
-    # Calculate elements of the volume
-    vol1 = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2])
-    vol2 = m[1][0] * (m[2][1] * m[0][2] - m[0][1] * m[2][2])
-    vol3 = m[2][0] * (m[0][1] * m[1][2] - m[1][1] * m[0][2])
-
-    scale = float(vol1 + vol2 + vol3) ** float(1/3)
-    return scale
 
 
 
@@ -197,14 +124,13 @@ def Extract(file_name):
             return data
 
 
-        # Get v, vn and vt, merge all primitives if multiple found
         primitives_list = []
         print('[MODULE][INFO]: Calculating indices...')
         for primitives in geometry.primitives:
             
             if primitives.normal is None or len(primitives.normal) != len(primitives.vertex):
-                if type(primitives) is collada.lineset.LineSet:
-                    print('[MODULE][WARNING]: Cannot generate normals for LineSet, this set of primitives will be skipped.')
+                if type(primitives) is collada.lineset.LineSet or type(primitives) is collada.polylist.Polylist:
+                    print('[MODULE][WARNING]: Cannot generate normals for LineSet/PolyList, this set of primitives will be skipped.')
                     continue
 
                 print('[MODULE][INFO]: Generating normals...')
@@ -278,6 +204,8 @@ def Extract(file_name):
                                              texture=texture,
                                              indices_end=indices_end))
 
+        if not primitives_list:
+            raise Exception('No valid primitives found in the model')
 
         ################################################
         # Controllers Library Section
@@ -310,6 +238,26 @@ def Extract(file_name):
             return output_weights
 
 
+        def GetPrimitiveByIndex(primitive_wrapper: PrimitiveWrapper, index):
+            """
+            Retrieves a primitive object from the list of visible primitives based on the given index, as if they were merged.
+
+            Parameters:
+                primitive_wrapper (PrimitiveWrapper): PrimitiveWrapper object to retireve from
+                index (int): The index of the primitive to retrieve.
+
+            Returns:
+                Primitive or None: The primitive object corresponding to the given index, or None if not found.
+            """
+            offset = 0
+            for primitive in primitive_wrapper.visible:
+                primitive_offset = primitive.indices_end + offset
+                if index <= primitive_offset:
+                    return primitive
+                offset += primitive.indices_end
+            return None
+
+
         # Extract armature data from existing controllers
         # (if they exist)
         if mesh.controllers:
@@ -322,9 +270,16 @@ def Extract(file_name):
                     print(f'[MODULE][INFO]: Armature found! Processing: "{geom_ctrl.id}"...')
 
                     # Extract bone names, stored in a fairly weird way so has to be retrieved like that
-                    bones = Bones([bone[0] for bone in geom_ctrl.weight_joints.data.tolist()])
-                    
+                    bones = Bones(ListFlatten(geom_ctrl.weight_joints.data.tolist()))
+
+                    # TODO
+                    # geom_ctrl.index - [ [bonename_index, vertex_index], ... ]
+                    # geom_ctrl.weights - [ [weight1, weight2, ...] ]     (ZAINDEKSOWANE PO VERTEX INDEX)
+
                     # Extract bone indices and weights
+                    all_bone_indices = []
+                    all_bone_weights = []
+                    all_face_indices = []
                     bone_slots = list()
                     bone_weight_warn = False
                     for bone_vertex in geom_ctrl.index:
@@ -341,8 +296,7 @@ def Extract(file_name):
                         if len(bone_weights) > 4:
 
                             # Remove len(bone_vertex)-4 smallest bone weights
-                            extra_args = len(bone_vertex) - 4
-                            for weight in sorted(bone_weights)[:extra_args]:
+                            for weight in sorted(bone_weights)[:len(bone_vertex)-4]:
                                 index = bone_weights.index(weight)
                                 del bone_weights[index]
                                 del bone_indices[index]
@@ -363,8 +317,8 @@ def Extract(file_name):
                             bone_indices.append(0.0)
                             bone_weights.append(0.0)
 
-                        bone = bone_indices + bone_weights
-                        bone_slots.append(bone)
+                        all_bone_indices += bone_indices
+                        all_bone_weights += bone_weights
                     
                     # No need to look for more controllers 
                     break
@@ -430,98 +384,98 @@ def Extract(file_name):
         #
         ##########################################
 
-
-        # ArmatureNodeFinder supports two search modes:
-        # - search by connected controllers
-        # - search by node name
-        #
-        # It depends on whether armature_node_name gets passed on
-        # If not, controller mode is used
-        #
-        # This function is a necessity since reading <skeleton>
+        # These functions are a necessity since reading <skeleton>
         # requires manual xml read relying on strings since 
         # PyCollada refuses to read that single node
         # <skeleton> points to the node containing
         # the, as the name sugests, armature/skeleton.
-        # Refer to https://github.com/pycollada/pycollada/issues/129
-        
-        def ArmatureNodeFinder(main_node, funct_mode, armature_node_name=None):
+        # Refer to https://github.com/pycollada/pycollada/issues/129        
+        def ArmatureFindNodeByController(main_node, controller):
             """
-            Recursively searches for an armature node in a Collada scene graph.
+            Recursively searches for an armature node connected to specified controller in a Collada scene graph.
 
             Args:
-                main_node (collada.scene.Node): The main node to start the search from.
-                funct_mode (str): The mode of operation. Can be 'name' or 'controller'.
-                armature_node_name (str, optional): The name of the armature node to search for. Required if funct_mode is 'name'.
+                main_node (collada.scene.Node): The main collada node to start the search from.
+                controller (collada.controller.Skin): Current geometry controller.
 
             Returns:
-                collada.scene.Node or None: The found armature node, or None if not found.
+                None (Implied return of collada.scene.Node or None (if not found) in located_armature_node_ctrl nonlocal var)
             """
 
-            nonlocal output_node
+            nonlocal located_armature_node_ctrl
+            if not located_armature_node_ctrl:
+                for child in main_node.children:
+
+                    # Look for nodes with ControllerNode as a child and 
+                    # check if it's the current geometry controller
+                    if type(child) is collada.scene.ControllerNode \
+                     and child.controller == controller:
+                        located_armature_node_ctrl = main_node
+
+                    # Apply recursion if child is an armature node
+                    if type(child) is collada.scene.Node:
+                        ArmatureFindNodeByController(child, controller)
+
+
+        def ArmatureFindNodeByName(main_node, armature_node_name):
+            """
+            Recursively searches for an armature node with a specified name in a Collada scene graph.
+
+            Args:
+                main_node (collada.scene.Node): The main collada node to start the search from.
+                armature_node_name (str, optional): The name of the armature node to search for.
+
+            Returns:
+                None (Implied return of collada.scene.Node or None (if not found) in located_collada_node_name nonlocal var)
+            """
+
+            nonlocal located_collada_node_name
 
             # Void all further recursions from this node
             # if found the correct armature node
-            if funct_mode == 'name':
-                if main_node.id == armature_node_name:
-                    output_node = main_node
+            if armature_node_name and main_node.id == armature_node_name:
+                located_collada_node_name = main_node
 
-            if not output_node:
+            if not located_collada_node_name:
 
                 # Iterate over all children
                 for child in main_node.children:
 
-                    # Look for nodes with ControllerNode as a child
-                    if funct_mode == 'controller':
-                        if type(child) is collada.scene.ControllerNode:
-                            if child.controller == geom_ctrl:
-                                output_node = main_node
-
                     # Apply recursion if child is an armature node
                     if type(child) is collada.scene.Node:
-                        ArmatureNodeFinder(child, funct_mode, armature_node_name)
+                        ArmatureFindNodeByName(child, armature_node_name)
 
-        ### BEGIN ArmatureNodeToXML
-        def ArmatureNodeToXML(main_node, path=list(), xml_path=list()):
+
+        def ColladaNodeToObj(collada_node, collada_path=[], obj_path=[]):
             """
-            Converts a Collada armature node to an XML representation.
+            Converts a Collada armature node to a unified ArmatureNode object representation.
 
             Args:
-                main_node (collada.scene.Node): The main node of the armature.
-                path (list, optional): The path of the current node in the armature hierarchy. Defaults to an empty list.
-                xml_path (list, optional): The XML path corresponding to the current node in the XML hierarchy. Defaults to an empty list.
+                collada_node (collada.scene.Node): The main node of the armature in collada.
+                collada_path (list, optional): The path of the current node in the armature hierarchy. Defaults to an empty list.
+                obj_path (list, optional): The  path corresponding to the current node in the XML hierarchy. Defaults to an empty list.
 
             Returns:
-                None (Implied return of the XML tree through nonlocal "root_xml_node" variable)
+                None (Implied return of the ArmatureNode tree through nonlocal "armature_root_node" variable)
             """
-
-            # Create a new entry from main_node data
-            # Initiate the tree if path is empty
-            if xml_path == list():
-                xml_entr_node = ET.Element('root')
-                nonlocal root_xml_node
-                root_xml_node = xml_entr_node
-            else:
-                xml_entr_node = ET.SubElement(xml_path[-1], 'entry')
 
             # "sid" is the common reference name for the bones
             # the other attributes are used as a fallback
             # Also, handle an edge case, where for some reason
             # bone nodes lack any name or id
             nonlocal bones_list
-            xml_name_node = ET.SubElement(xml_entr_node, 'name')
             
-            if 'sid' in main_node.xmlnode.keys():
-                xml_name_node.text = main_node.xmlnode.get('sid')
-            elif 'name' in main_node.xmlnode.keys():
-                xml_name_node.text = main_node.xmlnode.get('name')
-            elif 'id' in main_node.xmlnode.keys():
-                xml_name_node.text = main_node.id
+            if 'sid' in collada_node.xmlnode.keys():
+                obj_name = collada_node.xmlnode.get('sid')
+            elif 'name' in collada_node.xmlnode.keys():
+                obj_name = collada_node.xmlnode.get('name')
+            elif 'id' in collada_node.xmlnode.keys():
+                obj_name = collada_node.id
                 
             else:
                 nonlocal unnamed_bone_num
-                xml_name_node.text = 'UnnamedBone' + str(unnamed_bone_num)
-                bones_list.append(xml_name_node.text)
+                obj_name = 'UnnamedBone' + str(unnamed_bone_num)
+                bones_list.append(obj_name)
                 unnamed_bone_num += 1
                 
             # Attempt to use names instead of sid's if possible
@@ -529,9 +483,9 @@ def Extract(file_name):
             # It's a necessity since SK often uses names instead of sid's
             # Should be separate from the previous elif's in case the name
             # is not even within the "bones" list.
-            if 'name' in main_node.xmlnode.keys():
+            if 'name' in collada_node.xmlnode.keys():
                 
-                bone_name = main_node.xmlnode.get('name')
+                bone_name = collada_node.xmlnode.get('name')
 
                 # I firmly hope that's how these names are created
                 bone_sid_from_name = re.sub('[^0-9a-zA-Z]+', '_', bone_name)
@@ -539,55 +493,47 @@ def Extract(file_name):
                 if bone_sid_from_name in bones_list:
                     bone_name_index = bones_list.index(bone_sid_from_name)
                     bones_list[bone_name_index] = bone_name
-                    xml_name_node.text = bone_name
+                    obj_name = bone_name
 
             # Handle bone transforms
-            xml_trfm_node = ET.SubElement(xml_entr_node, 'transform')
-            xml_trfm_node.text = ' '
+            transforms_list = []
             
             # Define dict that may or may not be used
             # Used to store Euler XYZ rotation data in angles
             # If the model is using decomposed transforms
+            # Necessary since all rotation angles are stored as
+            # separate tags in collada
             # Default value: 0
             euler_rotations = dict.fromkeys(['x', 'y', 'z'], 0)
-            
-            # Marker that will signify that Euler rotations
-            # need to be converted to quaternion
             euler_rotations_exist = False
 
             # Handle various transform types
             # It feels redundant but some tags' data 
             # requires additional handling and I'd rather 
             # have them separately if it's ever necessary
-            for node_transform in main_node.transforms:
+            for node_transform in collada_node.transforms:
+                data = [float(i) for i in node_transform.xmlnode.text.split()]
 
                 if type(node_transform) is collada.scene.MatrixTransform:
-                    xml_trfm_chld_node = ET.SubElement(xml_trfm_node, 'matrix')
-                    xml_trfm_chld_data = node_transform.xmlnode.text.replace(' ', ', ')
-                    xml_trfm_chld_node.text = xml_trfm_chld_data
+                    transforms_list.append(Matrix(data)) 
 
                 # Decomposed transforms data below
                 elif type(node_transform) is collada.scene.TranslateTransform:
-                    xml_trfm_chld_node = ET.SubElement(xml_trfm_node, 'translation')
-                    xml_trfm_chld_data = node_transform.xmlnode.text.replace(' ', ', ')
-                    xml_trfm_chld_node.text = xml_trfm_chld_data
+                    transforms_list.append(Translation(data))
                 
                 elif type(node_transform) is collada.scene.ScaleTransform:
-                    xml_trfm_chld_node = ET.SubElement(xml_trfm_node, 'scale')
-
+                    transforms_list.append(Scale(data))
                     nonlocal scale_approx_warn
-                    if not scale_approx_warn:
+                    if not scale_approx_warn and len(data) != 1:
                         print('[MODULE][WARNING]: Uniform scale approximation detected, '
                                 'it is not accurate and may break the armature, '
                                 'instead of decomposed, use matrix transforms.')
                         scale_approx_warn = True
-
-                    xml_trfm_chld_node.text = str(ApproximateUniformScale(node_transform.matrix))
                     
                 # Support only for Blender-specific decomposed transformations
                 elif type(node_transform) is collada.scene.RotateTransform:
                     euler_rotations_exist = True
-                    
+
                     # Get rotation element letter in lowercase
                     # Checks the rotation tag SID
                     # Accepts format "rotationX", "rotationY" etc
@@ -606,36 +552,34 @@ def Extract(file_name):
                 else:
                     raise Exception(f'Unhandled transform type, found: {type(node_transform)}')
 
-                
             # Convert Euler rotation angles to Quaternions
             # If they are found
             if euler_rotations_exist:
-                xml_rotn_node = ET.SubElement(xml_trfm_node, 'rotation')
-                qtrnon = EulerToQuaternion(euler_rotations)
+                transforms_list.append(Rotation([euler_rotations[i] for i in ['x','y','z']]))
 
-                # Convert to data from list in XYZW order
-                xml_rotn_data = str([qtrnon[x] for x in ['x','y','z','w']])[1:-1]
+            obj_transform = Transform(transforms_list)
+
+            # Create a new entry from collada_node data
+            # Initiate the tree if path is empty
+            if obj_path == []:
+                obj_node = ArmatureNode(transform=obj_transform, name=obj_name)
+                nonlocal armature_root_node
+                armature_root_node = obj_node
+            else:
+                obj_node = ArmatureNode(transform=obj_transform, parent=obj_path[-1], name=obj_name)
+
+            if any(isinstance(val, collada.scene.Node) for val in collada_node.children):
                 
-                xml_rotn_node.text = xml_rotn_data
-
-
-            # There needs to be just any value in the tag, or SK xml parser
-            # will commit die instantly with little to no elaboration.
-            xml_chld_node = ET.SubElement(xml_entr_node, 'children')
-            xml_chld_node.text = ' '   
-
-            if any(isinstance(val, collada.scene.Node) for val in main_node.children):
+                collada_path.append(collada_node)
+                obj_path.append(obj_node)
                 
-                path.append(main_node)
-                xml_path.append(xml_chld_node)
-                
-                for child in main_node.children:
+                for child in collada_node.children:
                     if type(child) is collada.scene.Node:
-                        ArmatureNodeToXML(child, path, xml_path)
+                        ColladaNodeToObj(child, collada_path, obj_path)
                     
-                path.pop(-1)
-                xml_path.pop(-1)
-        ### END ArmatureNodeToXML
+                collada_path.pop(-1)
+                obj_path.pop(-1)
+
 
         # Try to extract the armature hierarchy
         # only if bones were exported previously.
@@ -645,59 +589,57 @@ def Extract(file_name):
             # First, find the parent node of <skeleton> xml node
             # Second, find the aforementioned
             # armature starting node by its name.
-            mode_order = ['controller', 'name']
-            armature_node_name = None
             print('[MODULE][INFO]: Extracting armature hierarchy...')
 
-            for funct_mode in mode_order:
-
-                output_node = None
-                
-                # Since main scene node may have multiple children
-                # we'll have to blanket-iterate over them all
-                for scene_node in mesh.scenes[0].nodes:
-                    ArmatureNodeFinder(scene_node, funct_mode, armature_node_name)
-                    if output_node:
+            located_collada_node_ctrl = None
+            for scene in mesh.scenes:
+                for scene_node in scene.nodes:
+                    ArmatureFindNodeByController(scene_node, geom_ctrl)
+                    if located_collada_node_ctrl:
                         break
 
-                if not output_node:
-                    args['bones'] = ''
-                    print('[MODULE][WARNING]: Unable to locate the armature '
-                            'starting joint node, file may be corrupted. '
-                            'Armature will not be imported.')
+            # Read the <skeleton> xml node data manually.
+            armature_node_name = None
+            for xml_node in located_collada_node_ctrl.xmlnode.iter():
+                if 'skeleton' in xml_node.tag:
+                    armature_node_name = xml_node.text.replace('#','')
                     break
-
-                # Read the <skeleton> xml node data manually.
-                if funct_mode == 'controller':
-                    for xml_node in output_node.xmlnode.iter():
-                        if 'skeleton' in xml_node.tag:
-                            armature_node_name = xml_node.text.replace('#','')
+            
+            located_collada_node_name = None
+            if armature_node_name:
+                for scene in mesh.scenes:
+                    for scene_node in scene.nodes:
+                        ArmatureFindNodeByName(scene_node, armature_node_name)
+                        if located_collada_node_name:
                             break
+
+            if not located_collada_node_ctrl or not located_collada_node_name:
+                args['bones'] = ''
+                print('[MODULE][WARNING]: Unable to locate the armature '
+                        'starting joint node, file may be corrupted. '
+                        'Armature will not be imported.')
                 
 
             # root_xml_node, bones_list and unnamed_bone_num
             # need to be accessible outside and inside
             # the recursions, as the root_xml_node is practically
-            # the xmltree output, bones_list contains fixed args['bones']
+            # the ArmatureNode tree output, bones_list contains fixed args['bones']
             # unnamed_bone_num has to retain its value over recursions
             # to prevent repetitions in generated bone names
-            root_xml_node = None
+            armature_root_node = None
             bones_list = args['bones'].split(', ')
-            armature_node = output_node
+            collada_main_node = located_collada_node
             unnamed_bone_num = 0
 
             # Warning issued if uniform scale approximation is detected
             # It sucks, it seriously, seriously sucks, so the user should know
-            # Var has to be defined outside of the function so that 
-            # it can be sent just once
             scale_approx_warn = False
-
 
             if args['bones'] != '':
                 print('[MODULE][INFO]: Creating armature xml tree...')
-                ArmatureNodeToXML(armature_node)
+                ColladaNodeToObj(collada_main_node)
                 args['bones'] = str(bones_list)[1:-1].replace("'", "")
-                args['bone_tree'] = ET.tostring(root_xml_node, encoding='unicode')
+                args['bone_tree'] = armature_root_node
 
 
         geometries_num -= 1
