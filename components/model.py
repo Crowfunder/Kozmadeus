@@ -4,7 +4,7 @@
 # Github: https://github.com/Crowfunder                       #
 ###############################################################
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import xml.etree.ElementTree as ET
 import math
 
@@ -317,7 +317,7 @@ class ArmatureNode:
 	transform: Transform
 	name: str
 	parent: 'ArmatureNode | None' = None
-	children: 'list[ArmatureNode]' = []	 # Lazy evaluation of types needed if dataclass contains itself
+	children: 'list[ArmatureNode]' = field(default_factory=list)	 # Lazy evaluation of types needed if dataclass contains itself
 	_tag_name: str = 'entry'
 
 	def __post_init__(self):
