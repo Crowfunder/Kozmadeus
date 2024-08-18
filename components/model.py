@@ -98,14 +98,16 @@ class VertexAttribData(ModelData):
 
 @dataclass
 class BoneIndices(VertexAttribData):
-	name: str = 'boneIndices'
 	size: int = 4
+	tag_name: str = 'entry'
+	name: str = 'boneIndices'
 
 
 @dataclass
 class BoneWeights(VertexAttribData):
-	name: str = 'boneWeights'
 	size: int = 4
+	tag_name: str = 'entry'
+	name: str = 'boneWeights'
 
 
 ######################
@@ -429,16 +431,26 @@ class PrimitivesWrapper:
 
 		max_extent = [-math.inf]*vertex_size
 		for i in range(vertex_size):
-			max_extent[i] = max([prim.max_extent[i] for prim in self._visible])
+			max_extent[i] = max([prim.max_extent[i] for prim in self.visible])
 		self.max_extent = ModelDataSimple(max_extent, 'maxExtent')
 
 		min_extent = [math.inf]*vertex_size
 		for i in range(vertex_size):
-			min_extent[i] = min([prim.min_extent[i] for prim in self._visible])
+			min_extent[i] = min([prim.min_extent[i] for prim in self.visible])
 		self.min_extent = ModelDataSimple(min_extent, 'minExtent')
 
 	def tostring(self):
 		return f'<{self.tag_name}><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds>{self._visible.tostring()}</{self.tag_name}>'
+	
+	def __iter__(self):
+		for entry in self.visible:
+			yield entry
+
+	def __getitem__(self, i):
+		return self.visible[i]
+
+	def __len__(self):
+		return len(self.visible)
 
 
 @dataclass
