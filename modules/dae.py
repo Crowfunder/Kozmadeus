@@ -6,7 +6,6 @@
 
 import gc
 import re
-import math
 import collada
 import xml.etree.ElementTree as ET
 
@@ -110,7 +109,7 @@ def Extract(file_name):
 
             # Transitional indices used for reordering data
             indices_trans = dict()
-            for i in range(0, len(new_indices)):
+            for i in range(max(len(new_indices), len(old_indices))):
                 indices_trans[old_indices[i]] = new_indices[i]
 
             # Initalize output data with empty vertices array
@@ -207,6 +206,9 @@ def Extract(file_name):
         if not primitives_list:
             raise Exception('No valid primitives found in the model')
 
+        final_primitives = PrimitivesWrapper(primitives_list)
+
+
         ################################################
         # Controllers Library Section
         #
@@ -230,7 +232,7 @@ def Extract(file_name):
             Returns:
             list: A list of normalized weights.
             """
-            output_weights = list()
+            output_weights = []
 
             for weight in weights:
                 output_weights.append(weight / sum(weights))
@@ -238,30 +240,44 @@ def Extract(file_name):
             return output_weights
 
 
-        def GetPrimitiveByIndex(primitive_wrapper: PrimitivesWrapper, index):
+        def GetPrimitiveIndexByIndex(primitive_wrapper: PrimitivesWrapper, index):
             """
-            Retrieves a primitive object from the list of visible primitives based on the given index, as if they were merged.
+            Retrieves index of primitive object from the list of visible primitives based on the given index in given PrimitivesWrapper, as if they were merged.
 
             Parameters:
                 primitive_wrapper (PrimitivesWrapper): PrimitivesWrapper object to retireve from
                 index (int): The index of the primitive to retrieve.
 
             Returns:
-                Primitive or None: The primitive object corresponding to the given index, or None if not found.
+                int or None: The index of the primitive object corresponding to the given index in given PrimitivesWrapper, or None if not found.
             """
             offset = 0
+            primitive_index = 0
             for primitive in primitive_wrapper.visible:
                 primitive_offset = primitive.indices_end + offset
                 if index <= primitive_offset:
-                    return primitive
+                    return primitive_index
                 offset += primitive.indices_end
+                primitive_index += 1
             return None
 
 
         # Extract armature data from existing controllers
         # (if they exist)
         if mesh.controllers:
-            
+
+            bones = []
+
+            # Prepare dicts for separating bone data into their respectable primitives
+            primitive_bone_indices = {}
+            primitive_bone_weights = {}
+            primitive_vertex_indices = {}
+            for i in range(len(final_primitives)):
+                primitive_vertex_indices[i] = []
+                primitive_bone_indices[i] = []
+                primitive_bone_weights[i] = []
+                
+
             # Look for controllers related to the current geometry
             for geom_ctrl in mesh.controllers:
                 if type(geom_ctrl) == collada.controller.Skin and \
@@ -270,28 +286,22 @@ def Extract(file_name):
                     print(f'[MODULE][INFO]: Armature found! Processing: "{geom_ctrl.id}"...')
 
                     # Extract bone names, stored in a fairly weird way so has to be retrieved like that
-                    bones = Bones(ListFlatten(geom_ctrl.weight_joints.data.tolist()))
+                    bones = ListFlatten(geom_ctrl.weight_joints.data.tolist())
 
-                    # TODO
-                    # geom_ctrl.index - [ [bonename_index, vertex_index], ... ]
-                    # geom_ctrl.weights - [ [weight1, weight2, ...] ]     (ZAINDEKSOWANE PO VERTEX INDEX)
-
-                    # Extract bone indices and weights
-                    all_bone_indices = []
-                    all_bone_weights = []
-                    all_face_indices = []
-                    bone_slots = list()
                     bone_weight_warn = False
                     for bone_vertex in geom_ctrl.index:
-                        bone_indices = list()
-                        bone_weights = list()
+                        vertex_index = 0
+                        bone_indices = []
+                        bone_weights = []
 
                         # Extract bone weights and indices for single vertex
-                        for bone_index, weight_index in bone_vertex:
+                        for bone_index, bone_weight_index in bone_vertex:
                             bone_indices.append(float(bone_index))
 
-                            for weight in geom_ctrl.weights.data[weight_index]:
+                            for weight in geom_ctrl.weights.data[bone_weight_index]:
                                 bone_weights.append(float(weight))
+
+                            vertex_index = bone_weight_index
 
                         if len(bone_weights) > 4:
 
@@ -317,12 +327,35 @@ def Extract(file_name):
                             bone_indices.append(0.0)
                             bone_weights.append(0.0)
 
-                        all_bone_indices += bone_indices
-                        all_bone_weights += bone_weights
+                        # Separate bone data into their respectable primitives
+                        primitive_index = GetPrimitiveIndexByIndex(final_primitives, vertex_index)
+                        if primitive_index is not None:
+                            primitive_vertex_indices[primitive_index].append(vertex_index)
+                            primitive_bone_indices[primitive_index] += bone_indices
+                            primitive_bone_weights[primitive_index] += bone_weights
                     
-                    # No need to look for more controllers 
+                    # No need to look for more controllers
                     break
 
+
+            for i in range(len(final_primitives)):
+
+                new_indices = final_primitives[i].indices.data
+                old_indices = primitive_vertex_indices[i]
+                bone_indices = primitive_bone_indices[i]
+                bone_weights = primitive_bone_weights[i]
+
+                bone_indices = PrimitiveReorder(bone_indices, old_indices, new_indices)
+                bone_weights = PrimitiveReorder(bone_weights, old_indices, new_indices)
+                
+                final_primitives[i] = PrimitiveAddSkin(primitive=final_primitives[i], bones=Bones(bones), vertex_attribs=VertexAttribArray([BoneIndices(bone_indices), BoneWeights(bone_weights)]))
+
+            pass
+
+            # TODO: So basically, there are two options how this is supposed to work
+            # A - Separate bone data based on indices_end primitive offsets into their primitives (present)
+            # B - If all primitives indeed use the same set of vertices (both have 524 in this case) just copypaste bone data into all primitives with matching vertices
+            #     Can be sanity-checked while iterating over all primitives by comparing to their original vertex indices (if they align with bone vertices)
 
 
         ###################################################
@@ -378,9 +411,8 @@ def Extract(file_name):
         ##########################################
         # Scenes Library Section
         #
-        # - Extract Armature Hierarchy
-        # - Create an Armature Hierarchy XML tree
-        # - Fix "args['bones']" if possible
+        # - Extract ArmatureNode Hierarchy
+        # - Fix Bones if possible
         #
         ##########################################
 
@@ -402,15 +434,15 @@ def Extract(file_name):
                 None (Implied return of collada.scene.Node or None (if not found) in located_armature_node_ctrl nonlocal var)
             """
 
-            nonlocal located_armature_node_ctrl
-            if not located_armature_node_ctrl:
+            nonlocal located_collada_node_ctrl
+            if not located_collada_node_ctrl:
                 for child in main_node.children:
 
                     # Look for nodes with ControllerNode as a child and 
                     # check if it's the current geometry controller
                     if type(child) is collada.scene.ControllerNode \
                      and child.controller == controller:
-                        located_armature_node_ctrl = main_node
+                        located_collada_node_ctrl = main_node
 
                     # Apply recursion if child is an armature node
                     if type(child) is collada.scene.Node:
