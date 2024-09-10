@@ -82,7 +82,7 @@ def Extract(file_name):
         primitive = Primitive(vertices=Vertices(vertices), normals=Normals(normals), texcoords=TexcoordsArray([Texcoords(texcoords)]), 
                               indices=Indices(indices), mode=mode, tag=tag, texture=texture, indices_end=max(indices))
 
-        model = Model(primitives=PrimitivesWrapper([primitive]), 
+        model = Model(primitives=PrimitiveWrapper([primitive]), 
                       materials=MaterialArray(entry_list=[material]))
 
         del faces

@@ -422,7 +422,7 @@ def PrimitiveAddSkin(primitive: Primitive, bones: Bones, vertex_attribs: VertexA
     )
 
 @dataclass
-class PrimitivesWrapper:
+class PrimitiveWrapper:
     visible: list[Primitive | SkinnedPrimitive]
     tag_name: str = 'node'
 
@@ -436,17 +436,23 @@ class PrimitivesWrapper:
 
         max_extent = [-math.inf]*vertex_size
         for i in range(vertex_size):
-            max_extent[i] = max([prim.max_extent[i] for prim in self.visible])
+            max_extent[i] = max(prim.max_extent[i] for prim in self.visible)
         self.max_extent = ModelDataSimple(max_extent, 'maxExtent')
 
         min_extent = [math.inf]*vertex_size
         for i in range(vertex_size):
-            min_extent[i] = min([prim.min_extent[i] for prim in self.visible])
+            min_extent[i] = min(prim.min_extent[i] for prim in self.visible)
         self.min_extent = ModelDataSimple(min_extent, 'minExtent')
+
+    def isskinned(self):
+        '''
+        Returns True if any primitive within visible is skinned
+        '''
+        return any(type(primitive) is SkinnedPrimitive for primitive in self.visible)
 
     def tostring(self):
         return f'<{self.tag_name}><bounds>{self.min_extent.tostring()}{self.max_extent.tostring()}</bounds>{self._visible.tostring()}</{self.tag_name}>'
-    
+
     def __iter__(self):
         for entry in self.visible:
             yield entry
@@ -462,12 +468,12 @@ class PrimitivesWrapper:
 
 
 @dataclass
-class ArticulatedPrimitivesWrapper(PrimitivesWrapper):
+class ArticulatedPrimitiveWrapper(PrimitiveWrapper):
     tag_name: str = 'skin'
 
 
 @dataclass
-class StaticPrimitivesWrapper(PrimitivesWrapper):
+class StaticPrimitiveWrapper(PrimitiveWrapper):
     tag_name: str = 'meshes'
 
 
@@ -515,10 +521,19 @@ class MaterialArray(EntryArray):
 
 @dataclass(kw_only=True)
 class Model:
-    primitives: ArticulatedPrimitivesWrapper | StaticPrimitivesWrapper | PrimitivesWrapper
+    primitives: ArticulatedPrimitiveWrapper | StaticPrimitiveWrapper | PrimitiveWrapper
     materials: 	MaterialArray
     armature: ArmatureNode | None = None
     mode: str = ''
+
+    def __post_init__(self):
+        self._skin_materials()
+
+    def _skin_materials(self):
+        if self.primitives.isskinned():
+            for i, material in enumerate(self.materials):
+                if type(material) is Material:
+                    self.materials[i] = MaterialAddSkin(material)
 
     def _get_armature_str(self):
         if self.armature:
@@ -564,10 +579,10 @@ def SetModelType(model: Model, mode: str):
         Exception: If an unknown model mode is provided.
     """
     if mode.capitalize() == 'Articulated':
-        return ArticulatedModel(primitives=ArticulatedPrimitivesWrapper(visible=model.primitives.visible), 
+        return ArticulatedModel(primitives=ArticulatedPrimitiveWrapper(visible=model.primitives.visible),
                                 materials=model.materials, armature=model.armature)
     elif mode.capitalize() == 'Static':
-        return StaticModel(primitives=StaticPrimitivesWrapper(visible=model.primitives.visible), 
+        return StaticModel(primitives=StaticPrimitiveWrapper(visible=model.primitives.visible),
                            materials=model.materials, armature=model.armature)
     else:
         raise Exception('Unknown model mode.')
