@@ -55,22 +55,22 @@ def Extract(file_name):
     if any(geometry.primitives == [] for geometry in mesh.geometries):
         print('[MODULE][INFO]: Removing empty geometries...')
         geometries = [geometry for geometry in geometries if geometry.primitives != []]
-        
+
     geometries_num = len(geometries)
     if geometries_num > 0:
         print(f'[MODULE][INFO]: Found {geometries_num} valid geometries!')
     else:
         raise Exception('Missing model geometry')
-        
+
 
     # Iterate through all geometries
     for geometry in geometries:
-        
+
         print(f'[MODULE][INFO]: Processing geometry: "{geometry.id}"')
         materials = ExtractMaterials(material_tag, mesh)
-        primitives = ExtractGeometries(geometry, material_tag)
+        primitives, old_vertex_indices = ExtractGeometries(geometry, material_tag)
         if mesh.controllers:
-            controller = ExtractControllers(mesh, geometry, primitives)
+            controller = ExtractControllers(mesh, geometry, primitives, old_vertex_indices)
         else:
             controller = None
 
@@ -108,14 +108,16 @@ def ExtractGeometries(geometry, material_tag):
     
     - Extract vertices, indices and normals
     - Fix normals if necessary
-    - Calculate min/max extents
+    - Generalize indices
     - Extract connected material name
     - Initiate primitives
     '''
     primitives_list = []
+    old_vertex_indices = []
 
     for collada_primitive in geometry.primitives:
         if collada_primitive.normal is None or len(collada_primitive.normal) != len(collada_primitive.vertex):
+
             if type(collada_primitive) is collada.lineset.LineSet or type(collada_primitive) is collada.polylist.Polylist:
                 print('[MODULE][WARNING]: Cannot generate normals for LineSet/PolyList, this set of primitives will be skipped.')
                 continue
@@ -138,6 +140,9 @@ def ExtractGeometries(geometry, material_tag):
         indices_vt_list = []
         for indices in collada_primitive.texcoord_indexset:
             indices_vt_list.append(ListFlatten(indices.tolist()))
+
+        # Save old vertex indices to use when reordering bone weight/index data
+        old_vertex_indices.append(indices_v)
 
         # Select the best candidate for general indices
         indices = sorted([indices_v,indices_vn]+indices_vt_list, key=len, reverse=True)[0]
@@ -185,16 +190,15 @@ def ExtractGeometries(geometry, material_tag):
                                          indices=Indices(indices),
                                          mode=mode,
                                          tag=material_tag,
-                                         texture=texture,
-                                         indices_end=indices_end))
+                                         texture=texture))
 
     if not primitives_list:
         raise Exception('No valid primitives found in the model')
 
-    return PrimitiveWrapper(primitives_list)
+    return PrimitiveWrapper(primitives_list), old_vertex_indices
 
 
-def ExtractControllers(mesh, geometry, primitives):
+def ExtractControllers(mesh, geometry, primitives, old_vertex_indices):
     '''
     Controllers Library Section
     - Extract bone indices, weights and names
@@ -212,14 +216,9 @@ def ExtractControllers(mesh, geometry, primitives):
     bones = []
     controller = None
 
-    # Prepare dicts for separating bone data into their respectable primitives
-    primitive_bone_indices = {}
-    primitive_bone_weights = {}
-    primitive_vertex_indices = {}
-    for i in range(len(primitives)):
-        primitive_vertex_indices[i] = []
-        primitive_bone_indices[i] = []
-        primitive_bone_weights[i] = []
+    primitive_bone_indices = []
+    primitive_bone_weights = []
+    primitive_vertex_indices = []
 
     # Look for controllers related to the current geometry
     for controller in mesh.controllers:
@@ -232,7 +231,6 @@ def ExtractControllers(mesh, geometry, primitives):
 
             bone_weight_warn = False
             for bone_vertex in controller.index:
-                vertex_index = 0
                 bone_indices = []
                 bone_weights = []
 
@@ -243,7 +241,7 @@ def ExtractControllers(mesh, geometry, primitives):
                     for weight in controller.weights.data[bone_weight_index]:
                         bone_weights.append(float(weight))
 
-                    vertex_index = bone_weight_index
+                    primitive_vertex_indices.append(bone_weight_index)
 
                 if len(bone_weights) > 4:
                     # Remove len(bone_vertex)-4 smallest bone weights
@@ -264,16 +262,12 @@ def ExtractControllers(mesh, geometry, primitives):
 
                 # Fill out the remaining bone slots with 0.0
                 zeros_num = 4 - len(bone_weights)
-                for i in range(0, zeros_num):
+                for _ in range(zeros_num):
                     bone_indices.append(0.0)
                     bone_weights.append(0.0)
 
-                # Separate bone data into their respectable primitives
-                primitive_index = GetPrimitiveIndexByIndex(primitives, vertex_index)
-                if primitive_index is not None:
-                    primitive_vertex_indices[primitive_index].append(vertex_index)
-                    primitive_bone_indices[primitive_index] += bone_indices
-                    primitive_bone_weights[primitive_index] += bone_weights
+                primitive_bone_indices.append(bone_indices)
+                primitive_bone_weights.append(bone_weights)
 
             # No need to look for more controllers
             break
@@ -281,17 +275,15 @@ def ExtractControllers(mesh, geometry, primitives):
     if not controller:
         return None
 
-    print('[MODULE][INFO]: Separating controller data into primitives...')
-    for i in range(len(primitives)):
-        new_indices = primitives[i].indices.data
-        old_indices = primitive_vertex_indices[i]
-        bone_indices = primitive_bone_indices[i]
-        bone_weights = primitive_bone_weights[i]
+    for i, primitive in enumerate(primitives):
+        if len(primitive.vertices) == len(primitive_bone_indices) \
+                and len(primitive.vertices) == len(primitive_bone_weights):
+            old_indices = old_vertex_indices[i]
+            new_indices = primitive.indices.data
+            primitive_bone_indices = ListFlatten(PrimitiveReorder(primitive_bone_indices, old_indices, new_indices))
+            primitive_bone_weights = ListFlatten(PrimitiveReorder(primitive_bone_weights, old_indices, new_indices))
+            primitives[i] = PrimitiveAddSkin(primitive=primitive, bones=Bones(bones), vertex_attribs=VertexAttribArray([BoneIndices(primitive_bone_indices), BoneWeights(primitive_bone_weights)]))
 
-        bone_indices = PrimitiveReorder(bone_indices, old_indices, new_indices)
-        bone_weights = PrimitiveReorder(bone_weights, old_indices, new_indices)
-                
-        primitives[i] = PrimitiveAddSkin(primitive=primitives[i], bones=Bones(bones), vertex_attribs=VertexAttribArray([BoneIndices(bone_indices), BoneWeights(bone_weights)]))
     return controller
 
 
@@ -615,15 +607,15 @@ def PrimitiveReorder(prim_list, old_indices, new_indices):
 
     # Transitional indices used for reordering data
     indices_trans = {}
-    for i in range(max(len(new_indices), len(old_indices))):
+    for i in range(min(len(new_indices), len(old_indices))):
         indices_trans[old_indices[i]] = new_indices[i]
 
     # Initalize output data with empty vertices array
     data = []
-    for _ in range(0, len(prim_list)):
+    for _ in range(max(new_indices+old_indices)):
         data.append([0.0] * len(prim_list[0]))
 
     # Reorder data in separate lists
-    for key_old, key_new in indices_trans.items():
+    for key_old, key_new in indices_trans.items():  # TODO: uwzględnij pomijane primitives
         data[key_new] = prim_list[key_old]
     return data
