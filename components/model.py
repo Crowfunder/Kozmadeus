@@ -362,11 +362,14 @@ class Primitive:
     mode:		 str
     tag: 		 str
     texture: 	 str
-    indices_end: int
     geom_class:  str = 'com.threerings.opengl.geometry.config.GeometryConfig$IndexedStored'
 
     def __post_init__(self):
         self._calculate_extents()
+        self._calculate_indices_end()
+
+    def _calculate_indices_end(self):
+        self.indices_end = max(self.indices)
 
     def _calculate_extents(self):
         vertex_size=3
@@ -376,8 +379,8 @@ class Primitive:
         # Iterate through vertices to find min/max
         for vertex in self.vertices:
             for index, point in enumerate(vertex):
-                min_extent[index] = min(min_extent[index], vertex[index])
-                max_extent[index] = max(max_extent[index], vertex[index])
+                min_extent[index] = min(min_extent[index], point)
+                max_extent[index] = max(max_extent[index], point)
 
         self.min_extent = ModelDataSimple(min_extent, 'minExtent')
         self.max_extent = ModelDataSimple(max_extent, 'maxExtent')
@@ -416,7 +419,6 @@ def PrimitiveAddSkin(primitive: Primitive, bones: Bones, vertex_attribs: VertexA
         mode=primitive.mode,
         tag=primitive.tag,
         texture=primitive.texture,
-        indices_end=primitive.indices_end,
         bones=bones,
         vertex_attribs=vertex_attribs
     )

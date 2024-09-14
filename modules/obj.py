@@ -79,8 +79,8 @@ def Extract(file_name):
             vertices.extend([float(val) for val in v[int(face_indices[0])-1].split()[1:]])
 
         material = Material(tag=tag, texture=texture)
-        primitive = Primitive(vertices=Vertices(vertices), normals=Normals(normals), texcoords=TexcoordsArray([Texcoords(texcoords)]), 
-                              indices=Indices(indices), mode=mode, tag=tag, texture=texture, indices_end=max(indices))
+        primitive = Primitive(vertices=Vertices(vertices), normals=Normals(normals), texcoords=TexcoordsArray([Texcoords(texcoords)]),
+                              indices=Indices(indices), mode=mode, tag=tag, texture=texture)
 
         model = Model(primitives=PrimitiveWrapper([primitive]), 
                       materials=MaterialArray(entry_list=[material]))
