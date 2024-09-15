@@ -19,18 +19,18 @@ class ModelDataSimple:
     def _tostring(self):
         if len(self.data) == 0:
             return ' '
-        return str(self.data)[1:-1]
-    
+        return str(self.data)[1:-1].replace("'", "").replace('"', '')
+
     def tostring(self):
         return f'<{self.tag_name}>{self._tostring()}</{self.tag_name}>'
-    
+
     def __iter__(self):
         for item in self.data:
             yield item
 
     def __getitem__(self, i):
         return self.data[i]
-    
+
     def __setitem__(self, i, new_value):
         self.data[i] = new_value
 
@@ -346,7 +346,7 @@ class ArmatureNode:
             child.parent = self
 
     def tostring(self):
-        return f'<{self._tag_name}><name>{self.name}<name>{self.transform.tostring()}{self._children.tostring()}</{self._tag_name}'
+        return f'<{self._tag_name}><name>{self.name}</name>{self.transform.tostring()}{self._children.tostring()}</{self._tag_name}>'
 
 
 ######################

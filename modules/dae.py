@@ -154,8 +154,6 @@ def ExtractGeometries(geometry, material_tag):
             vt_list[i] = Texcoords(ListFlatten(PrimitiveReorder(vt, indices_vt_list[i], indices)))
         vt_list = TexcoordsArray(vt_list)
 
-        indices_end = max(indices)
-
         # Determine the primitive mode
         if type(collada_primitive) is collada.lineset.LineSet:
             mode = 'LINES'
@@ -612,7 +610,7 @@ def PrimitiveReorder(prim_list, old_indices, new_indices):
 
     # Initalize output data with empty vertices array
     data = []
-    for _ in range(max(new_indices+old_indices)):
+    for _ in range(max(max(new_indices+old_indices), len(prim_list))):  # What is actually wrong with you
         data.append([0.0] * len(prim_list[0]))
 
     # Reorder data in separate lists
