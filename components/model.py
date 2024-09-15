@@ -373,8 +373,15 @@ class Primitive:
     geom_class:  str = 'com.threerings.opengl.geometry.config.GeometryConfig$IndexedStored'
 
     def __post_init__(self):
-        self._calculate_extents()
         self._calculate_indices_end()
+        self._trim_unnecessary_data()
+        self._calculate_extents()
+
+    def _trim_unnecessary_data(self):
+        self.vertices.data = self.vertices[0:self.indices_end+1]
+        self.normals.data = self.vertices[0:self.indices_end+1]
+        for i, texcoord in enumerate(self.texcoords):
+            self.texcoords[i].data = texcoord[0:self.indices_end+1]
 
     def _calculate_indices_end(self):
         self.indices_end = max(self.indices)
