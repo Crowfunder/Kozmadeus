@@ -59,7 +59,7 @@ class ModelData(ModelDataSimple):
 
     def tostring(self):
         return f'<{self.tag_name}><size>{self.size}</size><type>FLOAT</type><stride>{self.size*4}</stride><floatArray>{self._tostring()}</floatArray></{self.tag_name}>'
-    
+
     def __iter__(self):
         for index in range(len(self.data)//self.size):
             yield self.data[index*self.size : index*self.size + self.size]
@@ -68,9 +68,17 @@ class ModelData(ModelDataSimple):
         return len(self.data)//self.size
 
     def __getitem__(self, index):
-        if index > len(self):
+        if isinstance(index, int):
+            slice_start = index*self.size
+            slice_stop = index*self.size + self.size
+        elif isinstance(index, slice):
+            slice_start = index.start*self.size
+            slice_stop = index.stop*self.size
+        else:
+            raise TypeError(f'vertex indices must be integers or slices, not {type(index)}')
+        if slice_start > len(self.data) or slice_stop > len(self.data):
             raise IndexError('vertex index out of range')
-        return self.data[index*self.size : index*self.size + self.size]
+        return self.data[slice_start : slice_stop]
 
 
 @dataclass
@@ -96,7 +104,7 @@ class VertexAttribData(ModelData):
     name: str
     def tostring(self):
         return f'<{self.tag_name}><size>{self.size}</size><stride>{self.size*4}</stride><type>FLOAT</type><floatArray>{self._tostring()}</floatArray><name>{self.name}</name></{self.tag_name}>'
-     
+
 
 @dataclass
 class BoneIndices(VertexAttribData):
@@ -490,7 +498,7 @@ class Material:
     name: str = 'Model/Opaque'
 
     def tostring(self):
-        return f'<entry><outer rdepth="1"/><texture>{self.texture}</texture><tag>{self.tag}</tag><material><name>{self.name}</name><arguments><key class="java.lang.String">Texture</key><value class="com.threerings.config.ConfigReference"><name>2D/File/Default</name><arguments><key class="java.lang.String">File</key><value class="java.lang.String">PressToSelectTextureFile.png</value><key class="java.lang.String">Magnify</key><value class="com.threerings.opengl.renderer.config.TextureConfig$MagFilter">LINEAR</value><key class="java.lang.String">Minify</key><value class="com.threerings.opengl.renderer.config.TextureConfig$MinFilter">LINEAR</value></arguments></value></arguments></material></entry>'
+        return f'<entry><outer rdepth="1"/><key class="java.lang.String">Pass Mode</key><value class="java.lang.String">Normal</value><texture>{self.texture}</texture><tag>{self.tag}</tag><material><name>{self.name}</name><arguments><key class="java.lang.String">Texture</key><value class="com.threerings.config.ConfigReference"><name>2D/File/Default</name><arguments><key class="java.lang.String">File</key><value class="java.lang.String">PressToSelectTextureFile.png</value><key class="java.lang.String">Magnify</key><value class="com.threerings.opengl.renderer.config.TextureConfig$MagFilter">LINEAR</value><key class="java.lang.String">Minify</key><value class="com.threerings.opengl.renderer.config.TextureConfig$MinFilter">LINEAR</value></arguments></value></arguments></material></entry>'
 
 
 @dataclass
