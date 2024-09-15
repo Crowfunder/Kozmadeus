@@ -15,12 +15,13 @@ from components.model import *
 
 
 module_data = {
-    'Name'       : 'Wavefront',
-    'Author'     : 'Crowfunder',
-    'Mesh'       : True,
-    'Armature'   : False,
-    'Animations' : False,
-    'Multimesh'  : False
+    'Name'          : 'Wavefront',
+    'Author'        : 'Crowfunder',
+    'Mesh'          : True,
+    'Armature'      : False,
+    'Animations'    : False,
+    'Multimesh'     : False,
+    'Multimaterial' : False,
 }
 
 

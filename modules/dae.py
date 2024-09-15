@@ -12,12 +12,13 @@ from components.model import *
 
 
 module_data = {
-    'Name'       : 'Collada',
-    'Author'     : 'Crowfunder',
-    'Mesh'       : True,
-    'Armature'   : True,
-    'Animations' : False,
-    'Multimesh'  : True
+    'Name'          : 'Collada',
+    'Author'        : 'Crowfunder',
+    'Mesh'          : True,
+    'Armature'      : True,
+    'Animations'    : False,
+    'Multimesh'     : True,
+    'Multimaterial' : True,
 }
 
 
