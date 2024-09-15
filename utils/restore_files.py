@@ -18,9 +18,8 @@ RESTORE_URL = 'https://github.com/Crowfunder/Kozmadeus/raw/main/assets/' + RESTO
 # Restores both modules and templates
 # Download from github and unzip
 def RestoreFiles():
-    
-  if not os.path.isfile(RESTORE_FILENAME):
-    DownloadFile(RESTORE_URL, bar=None, out=RESTORE_FILENAME)
+    if not os.path.isfile(RESTORE_FILENAME):
+        DownloadFile(RESTORE_URL, bar=None, out=RESTORE_FILENAME)
 
-  with ZipFile(RESTORE_FILENAME, 'r') as zip_file:
-    zip_file.extractall()
+    with ZipFile(RESTORE_FILENAME, 'r') as zip_file:
+        zip_file.extractall()
