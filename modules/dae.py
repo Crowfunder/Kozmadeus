@@ -8,8 +8,10 @@ import gc
 import re
 import collada
 
-from components.model import *
+from components.model  import *
+from utils.logger      import GetLogger
 
+logger = GetLogger()
 
 module_data = {
     'Name'          : 'Collada',
@@ -48,18 +50,18 @@ def Extract(file_name):
     # TODO: Check the engine source if it *really* doesn't affect anything
     material_tag = 'default'
 
-    print('[MODULE][INFO]: Reading input model file...')
+    logger.info('Reading input model file...')
     models     = []
     mesh           = collada.Collada(file_name)
 
     geometries = mesh.geometries
     if any(geometry.primitives == [] for geometry in mesh.geometries):
-        print('[MODULE][INFO]: Removing empty geometries...')
+        logger.info('Removing empty geometries...')
         geometries = [geometry for geometry in geometries if geometry.primitives != []]
 
     geometries_num = len(geometries)
     if geometries_num > 0:
-        print(f'[MODULE][INFO]: Found {geometries_num} valid geometries!')
+        logger.info('Found %s valid geometries!', geometries_num)
     else:
         raise Exception('Missing model geometry')
 
@@ -67,7 +69,7 @@ def Extract(file_name):
     # Iterate through all geometries
     for geometry in geometries:
 
-        print(f'[MODULE][INFO]: Processing geometry: "{geometry.id}"')
+        logger.info('Processing geometry: "%s"', geometry.id)
         materials = ExtractMaterials(material_tag, mesh)
         primitives, old_vertex_indices = ExtractGeometries(geometry, material_tag)
         if mesh.controllers:
@@ -81,7 +83,7 @@ def Extract(file_name):
             armature = None
 
         geometries_num -= 1
-        print(f'[MODULE][INFO]: Done! {geometries_num} remaining.')
+        logger.info('Done! %s remaining.', geometries_num)
         gc.collect()
         models.append(Model(primitives=primitives, materials=materials, armature=armature))
 
@@ -95,7 +97,7 @@ def ExtractMaterials(material_tag, mesh):
 
     - Extract existing materials info
     '''
-    print(f'[MODULE][INFO]: Found {len(mesh.materials)} materials, extracting...')
+    logger.info('Found %s materials, extracting...', len(mesh.materials))
     materials_list = []
     for material in mesh.materials:
         texture = material.id
@@ -120,10 +122,10 @@ def ExtractGeometries(geometry, material_tag):
         if collada_primitive.normal is None or len(collada_primitive.normal) != len(collada_primitive.vertex):
 
             if type(collada_primitive) is collada.lineset.LineSet or type(collada_primitive) is collada.polylist.Polylist:
-                print('[MODULE][WARNING]: Cannot generate normals for LineSet/PolyList, this set of primitives will be skipped.')
+                logger.warning('Cannot generate normals for LineSet/PolyList, this set of primitives will be skipped.')
                 continue
 
-            print('[MODULE][INFO]: Generating normals...')
+            logger.debug('Generating normals...')
             collada_primitive.generateNormals()
 
         # Initalize temporary primitives
@@ -148,7 +150,7 @@ def ExtractGeometries(geometry, material_tag):
         # Select the best candidate for general indices
         indices = sorted([indices_v,indices_vn]+indices_vt_list, key=len, reverse=True)[0]
 
-        #print('[MODULE][INFO]: Generalizing indices...')   # TODO: would be great to have a LogOnce method...
+        logger.debug('Generalizing indices...')
         v = Vertices(ListFlatten(PrimitiveReorder(v, indices_v, indices)))
         vn = Normals(ListFlatten(PrimitiveReorder(vn, indices_vn, indices)))
         for i, vt in enumerate(vt_list):
@@ -158,22 +160,21 @@ def ExtractGeometries(geometry, material_tag):
         # Determine the primitive mode
         if type(collada_primitive) is collada.lineset.LineSet:
             mode = 'LINES'
-            print('[MODULE][WARNING]: Experimental geometry mode: ', type(collada_primitive),
-                        ' The results may be faulty.')
-                
+            logger.warning('Experimental geometry mode: %s, the results may be faulty.', type(collada_primitive))
+
         elif type(collada_primitive) is collada.triangleset.TriangleSet:
             mode = 'TRIANGLES'
-            #print('[MODULE][INFO]: Geometry mode: ', type(collada_primitive))
+            logger.debug('Geometry mode: %s', type(collada_primitive))
                 
         elif type(collada_primitive) is collada.polylist.Polygon:
             mode = 'POLYGON'
-            print('[MODULE][WARNING]: Experimental geometry mode: ', type(collada_primitive),
-                        ' The results may be faulty.')
+            logger.warning('Experimental geometry mode: %s, the results may be faulty.', type(collada_primitive))
+
                 
         elif type(collada_primitive) is collada.polylist.Polylist:
             mode = 'POLYGON'
-            print('[MODULE][WARNING]: Experimental Geometry Mode: ', type(collada_primitive),
-                        ' The results may be faulty.')
+            logger.warning('Experimental geometry mode: %s, the results may be faulty.', type(collada_primitive))
+
 
         else:
             raise Exception(f'Unrecognized geometry mode! '
@@ -207,11 +208,6 @@ def ExtractControllers(mesh, geometry, primitives, old_vertex_indices):
       hierarchy later on.
     '''
 
-    # TODO: So basically, there are two options how this is supposed to work
-    # A - Separate bone data based on indices_end primitive offsets into their primitives (present)
-    # B - If all primitives indeed use the same set of vertices (both have 524 in this case) just copypaste bone data into all primitives with matching vertices
-    #     Can be sanity-checked while iterating over all primitives by comparing to their original vertex indices (if they align with bone vertices)
-
     bones = []
     controller = None
 
@@ -223,7 +219,7 @@ def ExtractControllers(mesh, geometry, primitives, old_vertex_indices):
     for controller in mesh.controllers:
         if isinstance(controller, collada.controller.Skin) and \
                 controller.geometry.id == geometry.id:
-            print(f'[MODULE][INFO]: Controller found! Processing: "{controller.id}"...')
+            logger.info(f'Controller found! Processing: "%s"...', controller.id)
 
             # Extract bone names, stored in a fairly weird way so has to be retrieved like that
             bones = ListFlatten(controller.weight_joints.data.tolist())
@@ -250,11 +246,11 @@ def ExtractControllers(mesh, geometry, primitives, old_vertex_indices):
                         del bone_indices[index]
 
                     # Bone weights need to be normalized, so that they add up to 1
-                    bone_weights = WeightNormalize(bone_weights) 
+                    bone_weights = WeightNormalize(bone_weights)
 
                     if not bone_weight_warn:
                         bone_weight_warn = True
-                        print('[MODULE][WARNING]: Unable to handle more than 4 bone '
+                        logger.warning('Unable to handle more than 4 bone '
                                         'weights per vertex. Will cut the extra ones, '
                                         'but the armature may not work properly. '
                                         'Refer to the documentation.')
@@ -432,9 +428,9 @@ def ExtractArmature(mesh, primitives, controller):
                 transforms_list.append(Scale(data))
                 nonlocal scale_approx_warn
                 if not scale_approx_warn and len(data) != 1:
-                    print('[MODULE][WARNING]: Uniform scale approximation detected, '
-                            'it is not accurate and may break the armature, '
-                            'instead of decomposed, use matrix transforms.')
+                    logger.warning('Uniform scale approximation detected, '
+                                   'it is not accurate and may break the armature, '
+                                   'instead of decomposed, use matrix transforms.')
                     scale_approx_warn = True
 
             # Support only for Blender-specific decomposed transformations
@@ -491,7 +487,7 @@ def ExtractArmature(mesh, primitives, controller):
     # First, find the parent node of <skeleton> xml node
     # Second, find the aforementioned
     # armature starting node by its name.
-    print('[MODULE][INFO]: Searching for armature starting node...')
+    logger.info('Searching for armature starting node...')
 
     collada_controller_node = None
     for scene in mesh.scenes:
@@ -516,9 +512,9 @@ def ExtractArmature(mesh, primitives, controller):
                     break
 
     if not collada_controller_node or not collada_main_node:
-        print('[MODULE][WARNING]: Unable to locate the armature '
-                'starting joint node, file may be corrupted. '
-                'Armature will not be imported.')
+        logger.error('Unable to locate the armature '
+                     'starting joint node, file may be corrupted. '
+                     'Armature will not be imported.')
         return None
 
     # root_xml_node, bones_list and unnamed_bone_num
@@ -537,7 +533,7 @@ def ExtractArmature(mesh, primitives, controller):
     # Any bones list will do as all skinned primitives share the same array of bones, thanks collada.
     bones_list = [primitive.bones.data for primitive in primitives if type(primitive) is SkinnedPrimitive][0]
 
-    print('[MODULE][INFO]: Extracting armature tree...')
+    logger.info('Extracting armature tree...')
     ColladaNodeToObj(collada_main_node)
     for primitive in primitives:
         if type(primitive) is SkinnedPrimitive:

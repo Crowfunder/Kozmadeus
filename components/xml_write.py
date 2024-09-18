@@ -10,6 +10,8 @@
 import re
 import os
 
+from utils.logger import GetLogger
+logger = GetLogger()
 
 # Export args data to the output file
 # Based on the selected template
@@ -40,4 +42,4 @@ def ExportXML(file_name, template, args):
                 line = regex.sub(args[regex.search(line).group(1)], line)
 
             o.write(line)
-    print(f'[COMPONENT][INFO]: Finished writing to "{o.name}"')
+    logger.info('Finished writing to "%s"', o.name)

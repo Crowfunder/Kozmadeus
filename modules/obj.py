@@ -11,8 +11,11 @@
 #########################################
 
 import gc
-from components.model import *
 
+from components.model import *
+from utils.logger      import GetLogger
+
+logger = GetLogger()
 
 module_data = {
     'Name'          : 'Wavefront',
@@ -26,19 +29,17 @@ module_data = {
 
 
 def Extract(file_name):
+    logger.info('Reading input model file.')
     with open(file_name, 'r') as file:
         tag = 'default'
         texture = 'texture.png'
-        faces      = list()
-        indices    = list()
-        vertices   = list()
-        geometries = list()
+        faces      = []
+        indices    = []
+        vertices   = []
+        geometries = []
         lines = file.readlines()
-    
-        print('[MODULE][INFO]: Reading input model file.')
-        print('[MODULE][INFO]: Calculating indices...')
-        print('[MODULE][INFO]: Calculating min/max extents...')
-        
+
+        logger.info('Calculating indices...')
         for line in lines:
             # Store faces that determine the numbers for indices
             if line[0] == 'f':
@@ -50,18 +51,18 @@ def Extract(file_name):
                 for face in line.split()[1:]:
                     if face not in faces: faces.append(face.replace('\n', ''))
                     indices.append(faces.index(face))
-        
-        print('[MODULE][INFO]: Geometry mode: ', mode)
-            
+
+        logger.info('Geometry mode: %s', mode)
+
         vt = list(filter(lambda x: x[:2] == 'vt', lines))
         vn = list(filter(lambda x: x[:2] == 'vn', lines))
         v  = list(filter(lambda x: x[:2] == 'v ', lines))
-        
+
         if len(vt) == 0:
             raise Exception('Input model lacks UV mapping. '
                             'Model cannot be correctly created.')
-        
-        print('[MODULE][INFO]: Calculating vertices...')
+
+        logger.info('Calculating vertices...')
 
         # Generate vertices list based on indices from input file
         vertices = []
@@ -69,13 +70,13 @@ def Extract(file_name):
         normals = []
         for face in faces:
             face_indices = face.split('/')
-            
+
             # Texture coordinates, UV
             texcoords.extend([float(val) for val in vt[int(face_indices[1])-1].split()[1:]])
-            
+
             # Face normals
             normals.extend([float(val) for val in vn[int(face_indices[2])-1].split()[1:]])
-            
+
             # Position coordinates, XYZ
             vertices.extend([float(val) for val in v[int(face_indices[0])-1].split()[1:]])
 
