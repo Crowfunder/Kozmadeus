@@ -10,7 +10,7 @@ import sys
 import argparse
 
 # Internal Imports
-from main import RestoreFiles, CheckUpdates, ModuleData, Main
+from main import RestoreFiles, CheckUpdates, ModuleData, Main, Settings
 from main import VERSION_CURRENT, SEPARATOR
 
 # Class for disabling the output log
@@ -135,7 +135,9 @@ def CliMenu():
             PrintUpdates(False)
             print(SEPARATOR)
 
-        geometry = Main(parser_args.files_list, parser_args.mode, parser_args.no_file, parser_args.strip_armature_tree)
+        settings = Settings(file_names=parser_args.files_list, model_mode=parser_args.mode,
+                            no_export_file=parser_args.no_file, strip_armature_tree=parser_args.strip_armature_tree)
+        geometry = Main(settings)
 
     if parser_args.no_file:
         print(geometry)

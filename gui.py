@@ -10,7 +10,7 @@ import PySimpleGUI as sg
 import threading
 
 # Internal Imports
-from main import RestoreFiles, CheckUpdates, ModuleData, Main
+from main import RestoreFiles, CheckUpdates, ModuleData, Main, Settings
 from main import VERSION_CURRENT, SEPARATOR, FILE_TYPES_LIST
 
 
@@ -120,7 +120,7 @@ def GuiMenu():
 
     # Predefining file_names as empty list 
     # Necessary to make Listbox work
-    file_names = list()
+    file_names = []
 
     # Set the PySimpleGUI Theme
     sg.theme('DarkGrey')
@@ -370,15 +370,16 @@ def GuiMenu():
                     window.bind('<Return>', 'null')
                     processing_lock = True
 
+                    settings = Settings(file_names=file_names, model_mode=mode,
+                                        no_export_file=False, strip_armature_tree=strip_armature_tree)
+
                     # Long boi taken directly from PySimpleGUI Cookbook
                     # Creates a separate thread to prevent the program from freezing
-                    window.start_thread(lambda: Main(file_names, mode, 
-                                                    False, strip_armature_tree), 
-                                        '_THREAD-COMPLETE_')
+                    window.start_thread(lambda: Main(settings), '_THREAD-COMPLETE_')
 
                 else:
                     print('Please select a file!')
-            ### END SUBMIT  
+            ### END SUBMIT
 
         except Exception as exception:
             window['_STATUS_'].Update('Error!')

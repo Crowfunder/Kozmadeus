@@ -6,12 +6,14 @@
 
 # External Imports
 import gc
+from dataclasses import dataclass
 
 # Internal Imports
 from utils.check_updates      import VERSION_CURRENT
 from utils.check_updates      import CheckUpdates
 from utils.restore_files      import RestoreFiles
 from utils.logger             import GetLogger
+from utils.logger             import EndLogging
 from utils.logger             import InitRootLogger
 from utils.logger             import SEPARATOR
 from utils.logger             import LOGGING_FILE
@@ -22,13 +24,19 @@ from components.module_import import FILE_TYPES_LIST
 from components.model         import SetModelType
 
 
-def Main(file_names, mode, no_export_file, strip_armature_tree):
+@dataclass
+class Settings:
+    file_names: list[str]
+    model_mode: str = 'articulated'
+    no_export_file: bool = False
+    strip_armature_tree: bool = False
 
-    # Initiate Logger
+
+def Main(settings: Settings):
+
     InitRootLogger()
     logger = GetLogger()
-
-    for file_name in file_names:
+    for file_name in settings.file_names:
 
         try:
             logger.info('Processing: "%s"...', file_name)
@@ -40,22 +48,22 @@ def Main(file_names, mode, no_export_file, strip_armature_tree):
 
             for model in geometries:
 
-                logger.debug('Converting model to "%s" mode...', mode)
-                model = SetModelType(model, mode)
+                logger.debug('Converting model to "%s" mode...', settings.model_mode)
+                model = SetModelType(model, settings.model_mode)
 
                 # Option necessary for importing armors.
                 # Erases "bones" tag to fix armor armature
                 # conflicting with pc model armature.
-                if strip_armature_tree:
+                if settings.strip_armature_tree:
                     logger.debug('Stripped armature data.')
                     model.armature = None
 
                 # Set template to model geometry template
                 template = 'template_model'
-                logger.info('Writing model data to xml...')
 
-                if not no_export_file:
+                if not settings.no_export_file:
                     try:
+                        logger.info('Writing model data to xml...')
                         ExportXML(file_name, template, model.toargs())
 
                     except FileNotFoundError:
@@ -65,7 +73,7 @@ def Main(file_names, mode, no_export_file, strip_armature_tree):
                         logger.info('Retrying to write to XML...')
                         ExportXML(file_name, template, model.toargs())
 
-            if no_export_file:
+            if settings.no_export_file:
                 return geometries
 
             del geometries
@@ -77,5 +85,4 @@ def Main(file_names, mode, no_export_file, strip_armature_tree):
             raise
 
         finally:
-            logger.info('Finished logging to "%s"', LOGGING_FILE)
-            logger.info(SEPARATOR)
+            EndLogging()
