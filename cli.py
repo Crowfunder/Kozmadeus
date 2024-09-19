@@ -47,7 +47,12 @@ class modules_action(argparse.Action):
             help=help)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        ModuleData()
+        module_data = ModuleData()
+        string = '\nLoaded Modules:\n' + SEPARATOR + '\n'
+        for data in module_data:
+            string += data
+            string += SEPARATOR + '\n'
+        print(string)
         parser.exit()
 
 

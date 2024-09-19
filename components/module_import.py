@@ -23,18 +23,19 @@ if not modules.__modules__:
 # Function that outputs module data
 def ModuleData():
     """
-    Prints the list of installed modules and their module data.
+    Returns the str representation of dict installed modules and their module data.
     """
-    print('List of installed modules:\n')
-  
+    all_strings = []
     for module_name in modules.__modules__:
+        string = ''
         module = modules.__modules__[module_name]
         data = module.module_data
-  
-        print(SEPARATOR[0:29])
+
         for key in data:
-            # Do something with the module data
-            print(f'{key} : {data[key]}')
+            string += f'{key} : {data[key]}\n'
+        all_strings.append(string)
+    return all_strings
+        
 
 
 def ProcessModules(file_name):

@@ -45,6 +45,28 @@ def WindowUpdates(noupdate_silent):
                           icon='assets/kozmadeus.ico', title='Error',
                           font=('Helvetica', 11))
 
+def WindowModules():
+    module_data = ModuleData()
+    layout = [[sg.Text('Loaded Modules:', size=(16,1), font=('Helvetica', 14), 
+                          justification='c')], [sg.HorizontalSeparator()]]
+    layout_column = []
+    for data in module_data:
+        layout_column.append([sg.Text(data)])
+        layout_column.append([sg.HorizontalSeparator()])
+
+    layout.append([sg.Column(layout_column, scrollable=True, vertical_scroll_only=True, 
+                             expand_y=True, expand_x=True)])
+    window_modules = sg.Window('Module Data', layout, element_justification='c',
+                                icon='assets/kozmadeus.ico', finalize=True, size=(350, 600))
+    window_modules.bind('<Escape>', 'Exit')
+    window_modules.bring_to_front()
+
+    while True:
+        event, values = window_modules.Read()
+
+        if event is None or event == 'Exit':
+            window_modules.close()
+            break
 
 def WindowAbout():
     layout_credits = [
@@ -310,9 +332,8 @@ def GuiMenu():
             elif event == 'Modules':
                 if not processing_lock:
                     processing_lock = True
-                    ModuleData()
+                    WindowModules()
                     processing_lock = False
-                    print(SEPARATOR)
 
             elif event == 'Restore Files':
                 if not processing_lock:
