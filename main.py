@@ -22,6 +22,7 @@ from components.module_import      import ProcessModules
 from components.module_import      import ModuleData
 from components.module_import      import FILE_TYPES_LIST
 from schema.model                  import SetModelType
+from schema.model                  import Model
 
 
 @dataclass
@@ -43,40 +44,44 @@ def Main(settings: Settings):
 
             Extract, module_data = ProcessModules(file_name)
             logger.debug('Using "%s" module.', module_data["Name"])
-            geometries = Extract(file_name)
+            exportables_list = Extract(file_name)
             logger.info('Finished extracting the model data.')
 
-            for model in geometries:
+            for exportable in exportables_list:
 
-                logger.debug('Converting model to "%s" mode...', settings.model_mode)
-                model = SetModelType(model, settings.model_mode)
+                if isinstance(exportable, Model):
+                    logger.debug('Converting model to "%s" mode...', settings.model_mode)
+                    model = SetModelType(exportable, settings.model_mode)
 
-                # Option necessary for importing armors.
-                # Erases "bones" tag to fix armor armature
-                # conflicting with pc model armature.
-                if settings.strip_armature_tree:
-                    logger.debug('Stripped armature data.')
-                    model.armature = None
+                    # Option necessary for importing armors.
+                    # Erases "bones" tag to fix armor armature
+                    # conflicting with pc model armature.
+                    if settings.strip_armature_tree:
+                        logger.debug('Stripped armature data.')
+                        model.armature = None
 
-                # Set template to model geometry template
-                template = 'template_model'
+                    # Set template to model geometry template
+                    template = 'template_model'
+
+                else:
+                    raise Exception(f'Unknown exportable type: {type(exportable)}')
 
                 if not settings.no_export_file:
                     try:
                         logger.info('Writing model data to xml...')
-                        ExportXML(file_name, template, model.toargs())
+                        ExportXML(file_name, template, exportable.toargs())
 
                     except FileNotFoundError:
                         logger.error('Template files not found! '
                                      'Attempting to restore the files from Options...')
                         RestoreFiles()
                         logger.info('Retrying to write to XML...')
-                        ExportXML(file_name, template, model.toargs())
+                        ExportXML(file_name, template, exportable.toargs())
 
             if settings.no_export_file:
-                return geometries
+                return exportables_list
 
-            del geometries
+            del exportables_list
             gc.collect()
             logger.info(SEPARATOR)
 

@@ -51,8 +51,8 @@ def Extract(file_name):
     material_tag = 'default'
 
     logger.info('Reading input model file...')
-    models     = []
-    mesh           = collada.Collada(file_name)
+    exportables_list = []
+    mesh = collada.Collada(file_name)
 
     geometries = mesh.geometries
     if any(geometry.primitives == [] for geometry in mesh.geometries):
@@ -85,9 +85,9 @@ def Extract(file_name):
         geometries_num -= 1
         logger.info('Done! %s remaining.', geometries_num)
         gc.collect()
-        models.append(Model(primitives=primitives, materials=materials, armature=armature))
+        exportables_list.append(Model(primitives=primitives, materials=materials, armature=armature))
 
-    return models
+    return exportables_list
 
 
 
