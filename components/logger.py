@@ -7,7 +7,7 @@
 import logging
 import os
 import platform
-from utils.check_updates import VERSION_CURRENT
+from components.check_updates import VERSION_CURRENT
 
 
 LOGGING_APP  = 'Kozmadeus'

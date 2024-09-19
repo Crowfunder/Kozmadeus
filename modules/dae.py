@@ -8,8 +8,8 @@ import gc
 import re
 import collada
 
-from components.model  import *
-from utils.logger      import GetLogger
+from schema.model           import *
+from components.logger      import GetLogger
 
 logger = GetLogger()
 

@@ -10,7 +10,7 @@
 import re
 import os
 
-from utils.logger import GetLogger
+from components.logger import GetLogger
 logger = GetLogger()
 
 # Export args data to the output file

@@ -9,19 +9,19 @@ import gc
 from dataclasses import dataclass
 
 # Internal Imports
-from utils.check_updates      import VERSION_CURRENT
-from utils.check_updates      import CheckUpdates
-from utils.restore_files      import RestoreFiles
-from utils.logger             import GetLogger
-from utils.logger             import EndLogging
-from utils.logger             import InitRootLogger
-from utils.logger             import SEPARATOR
-from utils.logger             import LOGGING_FILE
-from components.xml_write     import ExportXML
-from components.module_import import ProcessModules
-from components.module_import import ModuleData
-from components.module_import import FILE_TYPES_LIST
-from components.model         import SetModelType
+from components.check_updates      import VERSION_CURRENT
+from components.check_updates      import CheckUpdates
+from components.restore_files      import RestoreFiles
+from components.logger             import GetLogger
+from components.logger             import EndLogging
+from components.logger             import InitRootLogger
+from components.logger             import SEPARATOR
+from components.logger             import LOGGING_FILE
+from components.xml_write          import ExportXML
+from components.module_import      import ProcessModules
+from components.module_import      import ModuleData
+from components.module_import      import FILE_TYPES_LIST
+from schema.model                  import SetModelType
 
 
 @dataclass
