@@ -1,4 +1,4 @@
-pycollada==0.7.2
+pycollada==0.8
 PySimpleGUI==4.60.5
 wget==3.2
 numpy<2.0.0
