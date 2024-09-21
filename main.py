@@ -21,9 +21,9 @@ from components.xml_write          import ExportXML
 from components.module_import      import ProcessModules
 from components.module_import      import ModuleData
 from components.module_import      import FILE_TYPES_LIST
-from schema.model                  import SetModelType
-from schema.model                  import Exportable
-from schema.model                  import Model
+from schema.export                 import SetModelType
+from schema.export                 import Model
+from schema.base                   import Exportable
 
 
 @dataclass
@@ -53,6 +53,9 @@ def Main(settings: Settings):
                 if not isinstance(exportable, Exportable):
                     raise Exception(f'Unknown non-exportable type: {type(exportable)}')
 
+                # Set template to exportable's
+                template = exportable.template_file
+
                 if type(exportable) is Model:
                     logger.debug('Converting model to "%s" mode...', settings.model_mode)
                     model = SetModelType(exportable, settings.model_mode)
@@ -64,8 +67,6 @@ def Main(settings: Settings):
                         logger.debug('Stripped armature data.')
                         model.armature = None
 
-                    # Set template to model geometry template
-                    template = 'template_model'
 
                 else:
                     raise Exception(f'Unknown exportable type: {type(exportable)}')
