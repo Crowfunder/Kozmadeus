@@ -22,6 +22,7 @@ from components.module_import      import ProcessModules
 from components.module_import      import ModuleData
 from components.module_import      import FILE_TYPES_LIST
 from schema.model                  import SetModelType
+from schema.model                  import Exportable
 from schema.model                  import Model
 
 
@@ -49,7 +50,10 @@ def Main(settings: Settings):
 
             for exportable in exportables_list:
 
-                if isinstance(exportable, Model):
+                if not isinstance(exportable, Exportable):
+                    raise Exception(f'Unknown non-exportable type: {type(exportable)}')
+
+                if type(exportable) is Model:
                     logger.debug('Converting model to "%s" mode...', settings.model_mode)
                     model = SetModelType(exportable, settings.model_mode)
 

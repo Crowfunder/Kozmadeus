@@ -537,7 +537,13 @@ class MaterialArray(EntryArray):
 ######################
 
 @dataclass(kw_only=True)
-class Model:
+class Exportable:
+    def toargs(self) -> dict:
+        raise NotImplementedError(f'Mandatory method not implemented')
+
+
+@dataclass(kw_only=True)
+class Model(Exportable):
     primitives: ArticulatedPrimitiveWrapper | StaticPrimitiveWrapper | PrimitiveWrapper
     materials: 	MaterialArray
     armature: ArmatureNode | None = None
