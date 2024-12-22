@@ -58,14 +58,14 @@ def Main(settings: Settings):
 
                 if type(exportable) is Model:
                     logger.debug('Converting model to "%s" mode...', settings.model_mode)
-                    model = SetModelType(exportable, settings.model_mode)
+                    exportable = SetModelType(exportable, settings.model_mode)
 
                     # Option necessary for importing armors.
                     # Erases "bones" tag to fix armor armature
                     # conflicting with pc model armature.
                     if settings.strip_armature_tree:
                         logger.debug('Stripped armature data.')
-                        model.armature = None
+                        exportable.armature = None
 
 
                 else:
