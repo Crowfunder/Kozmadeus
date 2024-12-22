@@ -52,8 +52,7 @@ jobs:
           script-name: cli.py
           windows-icon-from-ico: assets/kozmadeus.ico
           include-package: modules
-          standalone: true
-          onefile: false
+          mode: standalone
 
       - name: Prepare Compiled Distributions
         run: |
