@@ -43,7 +43,7 @@ jobs:
           include-package: modules
           disable-console: true
           enable-console: false
-          mode: app
+          mode: standalone
 
       - name: Compile CLI
         uses: Nuitka/Nuitka-Action@main
