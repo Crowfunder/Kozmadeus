@@ -67,11 +67,11 @@ pip install -U nuitka
 5. Compile it
 - Graphical User Interface:
 ```bash
-python -m nuitka --standalone --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=kozmadeus-gui.exe gui.py
+python -m nuitka --mode=standalone --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=kozmadeus-gui.exe gui.py
 ```
 - Command Line Interface:
 ```bash
-python -m nuitka --standalone --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico --output-filename=kozmadeus-cli.exe cli.py
+python -m nuitka --mode=standalone --include-package=modules --windows-icon-from-ico=assets/kozmadeus.ico --output-filename=kozmadeus-cli.exe cli.py
 ```
 6. Copy `assets` and `templates` folders into the created `gui.dist`/`cli.dist` folder, then within that folder you will find the compiled executable.
 
