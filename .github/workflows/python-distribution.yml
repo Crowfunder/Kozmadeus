@@ -58,8 +58,8 @@ jobs:
         run: |
           mkdir build/artifact/Kozmadeus
           echo Merging CLI and GUI into one artifact...
-          Copy-Item -Force build/cli.dist/* build/artifact/Kozmadeus
-          Copy-Item -Force build/gui.dist/* build/artifact/Kozmadeus
+          Copy-Item -Force -Recurse build/cli.dist/* build/artifact/Kozmadeus
+          Copy-Item -Force -Recurse build/gui.dist/* build/artifact/Kozmadeus
           Rename-Item build/artifact/Kozmadeus/gui.exe kozmadeus-gui.exe
           Rename-Item build/artifact/Kozmadeus/cli.exe kozmadeus-cli.exe
           echo Appending necessary assets... 
