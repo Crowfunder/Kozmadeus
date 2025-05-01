@@ -32,6 +32,7 @@ class Settings:
     model_mode: str = 'articulated'
     no_export_file: bool = False
     strip_armature_tree: bool = False
+    compatibility_mode: bool = False
 
 
 def Main(settings: Settings):
@@ -74,14 +75,14 @@ def Main(settings: Settings):
                 if not settings.no_export_file:
                     try:
                         logger.info('Writing model data to xml...')
-                        ExportXML(file_name, template, exportable.toargs())
+                        ExportXML(file_name, template, exportable.toargs(), settings.compatibility_mode)
 
                     except FileNotFoundError:
                         logger.error('Template files not found! '
                                      'Attempting to restore the files from Options...')
                         RestoreFiles()
                         logger.info('Retrying to write to XML...')
-                        ExportXML(file_name, template, exportable.toargs())
+                        ExportXML(file_name, template, exportable.toargs(), settings.compatibility_mode)
 
             if settings.no_export_file:
                 return exportables_list

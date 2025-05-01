@@ -6,7 +6,7 @@
 
 # External Imports
 from webbrowser import open as OpenURL
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import threading
 
 # Internal Imports
@@ -28,7 +28,7 @@ def WindowUpdates(noupdate_silent):
         update_data = CheckUpdates()
         
         if update_data['current'] != update_data['fetched']:
-            sg.Popup('Updates available! \nDownload at: '
+            sg.popup('Updates available! \nDownload at: '
                      'https://github.com/Crowfunder/Kozmadeus/releases\n\n'
                      f'Current version: {update_data["current"]}\n'
                      f'New version: {update_data["fetched"]}',
@@ -36,11 +36,11 @@ def WindowUpdates(noupdate_silent):
                      font=('Helvetica', 11))
         else:
             if not noupdate_silent:
-                sg.Popup('Kozmadeus is up to date!', icon='assets/kozmadeus.ico',
+                sg.popup('Kozmadeus is up to date!', icon='assets/kozmadeus.ico',
                          title='Up to date', font=('Helvetica', 11))
     except Exception as e:
         if not noupdate_silent:
-            sg.PopupError('Unable to fetch updates!\n'
+            sg.popup('Unable to fetch updates!\n'
                           'Check your internet connection.\n', e,
                           icon='assets/kozmadeus.ico', title='Error',
                           font=('Helvetica', 11))
@@ -185,6 +185,10 @@ def GuiMenu():
                         tooltip='Necessary for reimporting armors')
         ],
         [
+            sg.Checkbox('Compatibility mode', visible=True, key='_COMPATIBILITY-MODE_',
+                        tooltip='Fixes compatibility with older engine versions')
+        ],
+        [
             sg.Combo(['Opt1', 'Opt2'], readonly=True, visible=False, default_value='Opt1')
         ]
     ]
@@ -315,7 +319,7 @@ def GuiMenu():
 
             # Menubar shortcut related events
             elif event in (menubar_open   , 'Ctrl-O'):
-                file_names = sg.PopupGetFile('file to open', no_window=True,
+                file_names = sg.popup_get_file('file to open', no_window=True,
                                             multiple_files=True,
                                             file_types=FILE_TYPES_LIST)
 
@@ -383,6 +387,8 @@ def GuiMenu():
 
                 strip_armature_tree = window['_STRIP-ARMATURE-TREE_'].Get()
 
+                compatibility_mode = window['_COMPATIBILITY-MODE_'].Get()
+
                 # Start processing the files
                 if file_names:
 
@@ -392,7 +398,8 @@ def GuiMenu():
                     processing_lock = True
 
                     settings = Settings(file_names=file_names, model_mode=mode,
-                                        no_export_file=False, strip_armature_tree=strip_armature_tree)
+                                        no_export_file=False, strip_armature_tree=strip_armature_tree, 
+                                        compatibility_mode=compatibility_mode)
 
                     # Long boi taken directly from PySimpleGUI Cookbook
                     # Creates a separate thread to prevent the program from freezing
