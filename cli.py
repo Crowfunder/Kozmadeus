@@ -118,6 +118,9 @@ def CliMenu():
                         help='Strip armature tree data.\n'
                              'Necessary for reimporting armors '
                              'utilizing the pc model armature.')
+    parser.add_argument('--compatibility-mode', action='store_true',
+                        help='Post-process output XMLs for ' \
+                             'compatibility with older engine versions.')
 
     parser_args = parser.parse_args()
 
@@ -141,7 +144,8 @@ def CliMenu():
             print(SEPARATOR)
 
         settings = Settings(file_names=parser_args.files_list, model_mode=parser_args.mode,
-                            no_export_file=parser_args.no_file, strip_armature_tree=parser_args.strip_armature_tree)
+                            no_export_file=parser_args.no_file, strip_armature_tree=parser_args.strip_armature_tree,
+                            compatibility_mode=parser_args.compatibility_mode)
         geometry = Main(settings)
 
     if parser_args.no_file:

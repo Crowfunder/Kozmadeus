@@ -15,7 +15,7 @@ logger = GetLogger()
 
 # Export args data to the output file
 # Based on the selected template
-def ExportXML(file_name, template, args):
+def ExportXML(file_name, template, args, compatibility_mode=False):
 
     # Trim out the extension and add an appropriate one
     export_file = file_name.rsplit('.', 1)[0] + '.xml'
@@ -36,10 +36,17 @@ def ExportXML(file_name, template, args):
         # Grabbed directly from Bootshuze
         regex = re.compile(r'(?:{{ )([a-zA-Z_]*)(?: }})')
 
+        if compatibility_mode:
+            logger.debug('Using compatibility mode')
+
         for line in i:
 
             if any(f'{{ {arg} }}' in line for arg in args.keys()):
                 line = regex.sub(args[regex.search(line).group(1)], line)
 
+            if compatibility_mode:
+                line = line.replace('rdepth=', 'ref=').replace('depth=', 'id=')
+
             o.write(line)
     logger.info('Finished writing to "%s"', o.name)
+    return o.name
