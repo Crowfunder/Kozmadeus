@@ -1,4 +1,4 @@
-pycollada==0.9
+pycollada==0.9.3
 FreeSimpleGUI==5.2.0.post1
 wget==3.2
 numpy<3.0.0
